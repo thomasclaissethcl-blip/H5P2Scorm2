@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "applicationVersion": "1.0.1",
+  "runtimeProfileId": "h5p-standalone-3.8.2-core-1.28",
+  "player": {
+    "name": "h5p-standalone",
+    "version": "3.8.2",
+    "pinned": true,
+    "source": "https://github.com/tunapanda/h5p-standalone",
+    "releases": "https://github.com/tunapanda/h5p-standalone/releases"
+  },
+  "h5pCoreApi": {
+    "declaredCompatibilityCeiling": {
+      "majorVersion": 1,
+      "minorVersion": 28
+    },
+    "policy": "block-required-library-if-coreApi-is-higher",
+    "note": "Ce plafond est une déclaration de compatibilité maintenue par le projet. Il n'est pas découvert automatiquement dans H5P Standalone. Toute mise à jour du lecteur doit réévaluer ce plafond et relancer les tests.",
+    "reviewBasis": [
+      "https://github.com/h5p/h5p-php-library/commit/2fd12c1",
+      "https://github.com/tunapanda/h5p-standalone/commit/fc932e8"
+    ],
+    "reviewBasisNote": "Le plafond 1.28 est une décision conservatrice du projet fondée sur la synchronisation du vendor H5P Core de H5P Standalone en mars 2026, postérieure au passage amont de H5P Core API à 1.28. Il doit être revérifié à chaque mise à jour."
+  },
+  "scorm": {
+    "standard": "1.2",
+    "strictSuspendDataLimit": 4000,
+    "moodleExtendedSuspendDataLimit": 64000,
+    "moodleExtendedValidated": false,
+    "scoreNormalizedTo100": true
+  },
+  "validation": {
+    "primaryLms": "Moodle",
+    "manualValidatedContentTypes": [
+      "H5P.GameMap"
+    ],
+    "lastProfileReview": "2026-09-08"
+  }
+}

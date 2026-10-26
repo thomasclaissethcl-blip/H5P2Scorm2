@@ -1,0 +1,23 @@
+{
+  "scenarios": [
+    {
+      "fixture": "poc-valid.h5p",
+      "export_button_enabled": true,
+      "expected": true
+    },
+    {
+      "fixture": "poc-coreapi-future.h5p",
+      "export_button_enabled": false,
+      "expected": false
+    },
+    {
+      "fixture": "poc-missing-dependency.h5p",
+      "export_button_enabled": false,
+      "expected": false
+    }
+  ],
+  "browser_errors": [],
+  "limitation": "JSZip remplacé par un simulateur en mémoire, aucun vrai export ni lecteur",
+  "test": "Chromium simulated browser UI smoke",
+  "chromium_version": "Chromium 144.0.7559.96 built on Debian GNU/Linux 13 (trixie)"
+}

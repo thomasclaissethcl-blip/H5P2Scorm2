@@ -1,0 +1,93 @@
+{
+  "base_version": "1.0.1",
+  "archive_sha256": "eb40096d4bd5b977f1bec6efd8dd4f2ae14fe27345811bd51a22e0269aa7e1b2",
+  "files_from_original": 21,
+  "files_unchanged": 21,
+  "files": [
+    {
+      "file": "CHANGELOG.md",
+      "unchanged": true
+    },
+    {
+      "file": "COMPATIBILITY.md",
+      "unchanged": true
+    },
+    {
+      "file": "MAINTENANCE_MANIFEST.md",
+      "unchanged": true
+    },
+    {
+      "file": "MOODLE.md",
+      "unchanged": true
+    },
+    {
+      "file": "README.md",
+      "unchanged": true
+    },
+    {
+      "file": "RUNTIME_PROFILE.json",
+      "unchanged": true
+    },
+    {
+      "file": "THIRD_PARTY_NOTICES.md",
+      "unchanged": true
+    },
+    {
+      "file": "VERSION",
+      "unchanged": true
+    },
+    {
+      "file": "app.js",
+      "unchanged": true
+    },
+    {
+      "file": "index.html",
+      "unchanged": true
+    },
+    {
+      "file": "styles.css",
+      "unchanged": true
+    },
+    {
+      "file": "test-fixtures/poc-coreapi-future.h5p",
+      "unchanged": true
+    },
+    {
+      "file": "test-fixtures/poc-invalid.h5p",
+      "unchanged": true
+    },
+    {
+      "file": "test-fixtures/poc-language.h5p",
+      "unchanged": true
+    },
+    {
+      "file": "test-fixtures/poc-missing-dependency.h5p",
+      "unchanged": true
+    },
+    {
+      "file": "test-fixtures/poc-resume.h5p",
+      "unchanged": true
+    },
+    {
+      "file": "test-fixtures/poc-valid.h5p",
+      "unchanged": true
+    },
+    {
+      "file": "tests/runtime-smoke.mjs",
+      "unchanged": true
+    },
+    {
+      "file": "tests/validate_fixtures.py",
+      "unchanged": true
+    },
+    {
+      "file": "tests/validate_release.py",
+      "unchanged": true
+    },
+    {
+      "file": "tests/validate_ui.py",
+      "unchanged": true
+    }
+  ],
+  "note": "Comparaison uniquement à la création du lot 1 ; ne constitue pas un verrou interdisant les évolutions futures."
+}

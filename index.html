@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>H5P vers SCORM 1.2 - Version 1.0.1</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="hero-meta">
+        <p class="eyebrow">Version 1.0.1</p>
+        <span class="privacy-pill">Traitement local dans le navigateur</span>
+      </div>
+      <h1>H5P vers SCORM 1.2</h1>
+      <p>Convertit un fichier H5P en paquetage SCORM 1.2 autonome, avec localisation, CSS personnalisé, score normalisé sur 100 et reprise de progression.</p>
+    </header>
+
+    <section class="panel">
+      <div class="section-title">
+        <div>
+          <p class="step">Étape 1</p>
+          <h2>Source H5P <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la source H5P" data-help="Le fichier est lu et analysé directement dans votre navigateur. Il n'est pas envoyé par l'application vers un serveur.">?</button></h2>
+        </div>
+      </div>
+
+      <label id="h5pDropZone" class="file-drop" for="h5pFile">
+        <input id="h5pFile" type="file" accept=".h5p,.zip,application/zip">
+        <span class="drop-icon" aria-hidden="true">H5P</span>
+        <span id="dropFileName" class="drop-title">Glissez-déposez un fichier .h5p ici</span>
+        <span class="drop-subtitle">ou cliquez pour le sélectionner</span>
+        <span class="drop-help">Formats acceptés : .h5p et archive .zip structurée comme un H5P</span>
+      </label>
+      <div class="inline-label">Fichier sélectionné <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le fichier sélectionné" data-help="Le nom et la taille du fichier apparaissent ici. L'analyse démarre automatiquement après la sélection ou le dépôt.">?</button></div>
+      <div id="fileMeta" class="muted">Aucun fichier chargé.</div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <div>
+          <p class="step">Étape 2</p>
+          <h2>Apparence <button type="button" class="help" aria-expanded="false" aria-label="Aide sur l'apparence" data-help="Les styles personnalisés sont ajoutés après les styles H5P afin de pouvoir les surcharger. Les règles CSS importées et saisies sont concaténées.">?</button></h2>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="field">
+          <label for="cssFile">Fichier CSS facultatif <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le fichier CSS" data-help="Importez un fichier .css si votre charte existe déjà. Son contenu sera intégré dans le SCORM généré.">?</button></label>
+          <input id="cssFile" type="file" accept=".css,text/css">
+        </div>
+        <div class="field-note">
+          <div class="field-note-title">Ordre d'application <button type="button" class="help" aria-expanded="false" aria-label="Aide sur l'ordre d'application du CSS" data-help="La surcouche personnalisée est chargée après les styles du lecteur H5P et des bibliothèques. Certaines règles H5P très spécifiques peuvent toutefois nécessiter des sélecteurs plus précis.">?</button></div>
+          <span>Les styles personnalisés sont chargés en dernier pour faciliter les surcharges.</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="cssText">CSS intégré <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le CSS intégré" data-help="Ajoutez ou modifiez ici des règles CSS. Elles s'ajoutent au fichier CSS éventuellement importé. Laissez vide si aucune surcouche n'est souhaitée.">?</button></label>
+        <textarea id="cssText" rows="10" spellcheck="false">/* Exemple de surcouche */
+.h5p-content {
+  font-family: Arial, sans-serif;
+}
+</textarea>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <div>
+          <p class="step">Étape 3</p>
+          <h2>Paramètres SCORM <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les paramètres SCORM" data-help="Ces réglages déterminent le titre du SCO, la langue, la logique de réussite et la manière dont la progression H5P est conservée dans SCORM 1.2.">?</button></h2>
+        </div>
+      </div>
+
+      <div class="grid three">
+        <div class="field">
+          <label for="courseTitle">Titre du SCO <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le titre du SCO" data-help="Titre affiché par le LMS pour la ressource SCORM. Le nom du fichier H5P est proposé automatiquement et peut être modifié.">?</button></label>
+          <input id="courseTitle" type="text" value="Activité H5P">
+        </div>
+        <div class="field">
+          <label for="languageOverride">Langue de sortie <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la langue de sortie" data-help="Laissez vide pour utiliser en priorité la langue déclarée dans le H5P, puis ses métadonnées, puis la langue du navigateur. Saisissez par exemple fr pour imposer le français.">?</button></label>
+          <input id="languageOverride" type="text" inputmode="text" autocomplete="off" placeholder="Automatique, ex. fr">
+        </div>
+        <div class="field">
+          <label for="statusPolicy">Politique de statut <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la politique de statut" data-help="Automatique utilise les informations de réussite émises par H5P puis le score si nécessaire. Seuil de score décide selon le pourcentage obtenu. Achèvement seul remonte completed sans imposer passed ou failed.">?</button></label>
+          <select id="statusPolicy">
+            <option value="auto" selected>Automatique</option>
+            <option value="score">Seuil de score</option>
+            <option value="completion">Achèvement seul</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid three">
+        <div class="field">
+          <label for="masteryScore">Seuil de réussite (%) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le seuil de réussite" data-help="Pourcentage utilisé pour déterminer passed ou failed lorsque la politique le nécessite. Le score envoyé au LMS est toujours normalisé de 0 à 100.">?</button></label>
+          <input id="masteryScore" type="number" min="0" max="100" step="1" value="80">
+        </div>
+        <div class="field">
+          <label for="saveFreq">Fréquence de sauvegarde (s) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la fréquence de sauvegarde" data-help="Intervalle entre deux captures périodiques de l'état H5P. Des sauvegardes supplémentaires peuvent aussi être déclenchées par les événements xAPI et lors de la fermeture.">?</button></label>
+          <input id="saveFreq" type="number" min="5" max="300" step="1" value="10">
+        </div>
+        <div class="field">
+          <label for="resumeProfile">Profil de reprise <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le profil de reprise" data-help="SCORM 1.2 strict limite l'état à 4000 caractères pour maximiser l'interopérabilité. Moodle étendu 64K autorise jusqu'à 64000 caractères, mais exige une configuration serveur spécifique et reste expérimental ici.">?</button></label>
+          <select id="resumeProfile">
+            <option value="strict" selected>SCORM 1.2 strict, recommandé</option>
+            <option value="moodle-extended">Moodle étendu 64K, expérimental</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-note accent-note">
+        <div class="field-note-title">Reprise de progression <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la reprise de progression" data-help="L'état H5P est sérialisé et compressé si possible, puis enregistré dans cmi.suspend_data. Si l'état dépasse la capacité du profil choisi, le dernier état sauvegardable est conservé et une alerte peut être affichée dans l'activité.">?</button></div>
+        <span>Le profil strict reste la valeur par défaut. Le mode Moodle étendu est fourni pour les environnements administrés où cette capacité est explicitement autorisée.</span>
+      </div>
+
+      <div class="checks">
+        <label class="check"><input id="markIncomplete" type="checkbox" checked> Marquer la tentative « incomplete » au premier lancement <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le statut incomplete" data-help="Recommandé pour permettre au LMS de considérer la tentative comme en cours tant que le H5P n'a pas produit de résultat final.">?</button></label>
+        <label class="check"><input id="enableResume" type="checkbox" checked> Activer la reprise via <code>cmi.suspend_data</code> <button type="button" class="help" aria-expanded="false" aria-label="Aide sur l'activation de la reprise" data-help="Désactivez cette option uniquement si le contenu ne doit jamais restaurer une progression précédente. Pour Moodle, il est recommandé de la laisser activée.">?</button></label>
+        <label class="check"><input id="showRuntimeWarnings" type="checkbox" checked> Afficher uniquement les alertes de reprise dans l'activité <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les alertes de reprise" data-help="Aucun message de sauvegarde réussie n'est affiché. Cette option autorise seulement les alertes utiles, par exemple un état trop volumineux. Les erreurs SCORM graves restent signalées.">?</button></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="row between section-title compact">
+        <div>
+          <p class="step">Étape 4</p>
+          <h2>Diagnostic <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le diagnostic" data-help="Le diagnostic contrôle la structure du H5P, ses dépendances, la compatibilité H5P Core API, sa langue et les paramètres de suivi. Les erreurs bloquent la génération. Les avertissements n'empêchent pas la création du SCORM.">?</button></h2>
+        </div>
+        <button id="analyzeBtn" type="button" disabled>Analyser à nouveau</button>
+      </div>
+      <div id="diagnostic" class="diagnostic empty">Chargez un fichier H5P pour commencer.</div>
+    </section>
+
+    <section class="panel" id="previewPanel">
+      <div class="row between section-title compact">
+        <div>
+          <p class="step">Après analyse</p>
+          <h2>Visionneuse H5P <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la visionneuse" data-help="L'aperçu teste votre activité dans un cadre isolé. Il ne communique aucun score à Moodle. Certains contenus H5P ne sont pas encore compatibles avec le mode isolé.">?</button></h2>
+        </div>
+        <div class="preview-actions">
+          <button id="previewRestart" type="button" disabled>Recommencer</button>
+          <button id="previewExpand" type="button" disabled>Agrandir</button>
+        </div>
+      </div>
+      <p id="previewStatus" class="muted" role="status" aria-live="polite">Importez un H5P valide pour afficher l'aperçu.</p>
+      <div id="previewViewport" class="preview-viewport">
+        <iframe id="previewFrame" title="Aperçu interactif du contenu H5P" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="eager"></iframe>
+      </div>
+      <details class="preview-details">
+        <summary>Diagnostic de prévisualisation</summary>
+        <p class="muted">Les événements xAPI sont affichés à titre informatif. Aucune note n'est envoyée à un LMS.</p>
+        <pre id="previewEvents" class="preview-events">Aucun événement.</pre>
+      </details>
+      <p class="muted preview-caveat">Cette version expérimentale télécharge le lecteur 3.8.2 lors du premier aperçu, puis utilise les ressources H5P en mémoire. Le cadre bloque les connexions réseau et les sous-frames, ce qui peut limiter certains types d'activités.</p>
+    </section>
+
+    <section class="panel">
+      <div class="row between section-title compact">
+        <div>
+          <p class="step">Étape 5</p>
+          <h2>Génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la génération" data-help="Le navigateur construit le ZIP SCORM localement. Une connexion Internet est actuellement nécessaire au moment de la conversion pour récupérer la version figée du lecteur H5P Standalone.">?</button></h2>
+        </div>
+        <button id="generateBtn" type="button" disabled>Générer le SCORM</button>
+      </div>
+      <div id="generationProgressWrap" class="generation-progress" hidden>
+        <div class="generation-progress-head">
+          <span id="generationProgressPhase">Génération</span>
+          <span id="generationProgressPercent" class="metric">0 %</span>
+        </div>
+        <progress id="generationProgress" max="100" value="0">0 %</progress>
+      </div>
+      <div class="inline-label">Journal de génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le journal de génération" data-help="Ce journal concerne uniquement la conversion. Il n'affiche pas les sauvegardes de progression effectuées ensuite dans l'activité SCORM.">?</button></div>
+      <pre id="log" class="log" aria-live="polite"></pre>
+    </section>
+
+    <section class="panel notes">
+      <div class="section-title">
+        <div>
+          <h2>Compatibilité et limites <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les limites" data-help="La version 1.0.1 est centrée sur SCORM 1.2 et Moodle. Elle contrôle aussi la H5P Core API demandée par les bibliothèques avant génération. La compatibilité H5P dépend encore du comportement propre de chaque bibliothèque, notamment pour la restauration de l'état.">?</button></h2>
+        </div>
+      </div>
+      <ul>
+        <li>SCORM 1.2 uniquement, avec Moodle comme cible de validation prioritaire.</li>
+        <li>Runtime figé : H5P Standalone 3.8.2, plafond de compatibilité déclaré H5P Core API 1.28. Une bibliothèque requérant une API plus récente bloque la génération.</li>
+        <li>Score SCORM normalisé de 0 à 100, quel que soit le barème natif du H5P.</li>
+        <li>Reprise stricte limitée à 4000 caractères après optimisation. Le mode Moodle 64K est expérimental.</li>
+        <li>Les messages ordinaires de sauvegarde ne sont jamais affichés dans l'activité. Seules les alertes utiles peuvent apparaître.</li>
+        <li>Certains types H5P peuvent restaurer leur progression sans restaurer tous les détails visuels.</li>
+        <li>Le contenu H5P et le CSS sont traités localement. Le lecteur H5P est récupéré au moment de la génération puis embarqué dans le SCORM.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="src/runtime-profiles.js"></script>
+  <script src="src/h5p-dependencies.js"></script>
+  <script src="src/h5p-analysis.js"></script>
+  <script src="src/preview-frame.js"></script>
+  <script src="src/h5p-preview.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

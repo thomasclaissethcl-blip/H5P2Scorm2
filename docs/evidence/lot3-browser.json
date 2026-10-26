@@ -1,0 +1,17 @@
+{
+  "browser": "Chromium",
+  "status": "success",
+  "checks": [
+    "chargement iframe",
+    "ressources virtuelles JSON/image",
+    "CSS virtuel",
+    "interaction bouton",
+    "XHR virtuel",
+    "CSP réseau bloqué",
+    "origine iframe opaque",
+    "réinitialisation",
+    "réouverture",
+    "aucune erreur JavaScript"
+  ],
+  "limitation": "Lecteur simulé, H5P Standalone réel et contenus tiers encore non testés"
+}
