@@ -23,7 +23,10 @@
   let lastHeight = 0;
   let fitToHeight = false;
   let fitSchedule = false;
-  let fitInProgress = false;
+  let isGameMap = false;
+  let lastRequestedLayoutDiagnostic = '';
+  let lastConfirmedLayoutDiagnostic = '';
+  let lastRootLayoutGeometry = '';
   let securityWarningCount = 0;
   function signal(type, text) {
     parent.postMessage({channel:'h5p-preview',token,type,message:String(text || '').slice(0,350)}, '*');
@@ -143,14 +146,40 @@
     try { source.postMessage({channel:'h5p-preview-child-css',key:childKey,css:activeCss}, '*'); }
     catch (_err) { childFrames.delete(source); }
   }
+  function sendLayoutToChild(source) {
+    if (!isGameMap) return;
+    try { source.postMessage({channel:'h5p-preview-child-layout',key:childKey,enabled:fitToHeight}, '*'); }
+    catch (_err) { childFrames.delete(source); }
+  }
+  function sendLayoutToChildren() {
+    for (const child of childFrames) sendLayoutToChild(child);
+  }
+  function applyGameMapLayout(enabled) {
+    if (!isGameMap) return false;
+    let applied = false;
+    for (const instance of window.H5P?.instances || []) {
+      if (typeof instance?.main?.setFullscreen !== 'function') continue;
+      try { instance.main.setFullscreen(enabled); applied = true; }
+      catch (_err) { signal('warning', 'Redimensionnement Game Map indisponible dans le lecteur principal.'); }
+    }
+    return applied;
+  }
   // Le Core H5P peut créer une seconde iframe à origine opaque, inaccessible
   // même depuis le lecteur. Un agent CSS est ajouté à sa propre ressource
   // frame.bundle.js et reçoit exclusivement du CSS via postMessage.
+  window.addEventListener('message', event => {
+    if (event.data?.channel !== 'h5p-preview-child-layout-status' || event.data?.key !== childKey) return;
+    if (event.source === parent || !childFrames.has(event.source)) return;
+    const message = 'Game Map : géométrie de la carte calculée par le lecteur H5P (' +
+      (event.data.enabled ? 'agrandi' : 'normal') + ').';
+    if (lastConfirmedLayoutDiagnostic !== message) { lastConfirmedLayoutDiagnostic = message; signal('fit', message); }
+  });
   window.addEventListener('message', event => {
     if (event.data?.channel !== 'h5p-preview-child-ready' || event.data?.key !== childKey) return;
     if (event.source === parent || !event.source) return;
     childFrames.add(event.source);
     sendCssToChild(event.source);
+    sendLayoutToChild(event.source);
     signal('css-child-ready', 'Sous-document H5P CSS connecté.');
   });
   function installChildCssBridge() {
@@ -163,8 +192,22 @@
         'if(!style||!style.isConnected){style=document.createElement("style");style.id="preview-child-custom-css";}' +
         'if(style.textContent!==css)style.textContent=css;' +
         'if(document.head.lastElementChild!==style)document.head.appendChild(style);}' +
-      'window.addEventListener("message",function(e){if(e.source!==parent||e.data?.channel!=="h5p-preview-child-css"||e.data.key!==KEY)return;' +
-        'css=String(e.data.css||"");apply();});' +
+      'let layoutEnabled=false;let pendingLayout=false;let lastLayoutGeometry=null;' +
+      'function applyLayout(){' +
+        'const instances=window.H5P?.instances||[];let applied=false;' +
+        'const geometry=(layoutEnabled?"1":"0")+":"+innerWidth+":"+innerHeight;' +
+        'if(geometry===lastLayoutGeometry)return;' +
+        'for(const instance of instances){if(typeof instance?.main?.setFullscreen!=="function")continue;' +
+          'try{instance.main.setFullscreen(layoutEnabled);applied=true;}catch(_error){}' +
+        '}' +
+        'if(applied){lastLayoutGeometry=geometry;parent.postMessage({channel:"h5p-preview-child-layout-status",key:KEY,enabled:layoutEnabled},"*");}' +
+      '}' +
+      'function scheduleLayout(){if(pendingLayout)return;pendingLayout=true;' +
+        'setTimeout(function(){pendingLayout=false;applyLayout();},50);}' +
+      'window.addEventListener("message",function(e){if(e.source!==parent||e.data?.key!==KEY)return;' +
+        'if(e.data.channel==="h5p-preview-child-css"){css=String(e.data.css||"");apply();}' +
+        'if(e.data.channel==="h5p-preview-child-layout"){layoutEnabled=!!e.data.enabled;scheduleLayout();}' +
+      '});' +
       'function refresh(){if(scheduled)return;scheduled=true;setTimeout(function(){scheduled=false;apply();},40);}' +
       'new MutationObserver(function(changes){if(changes.some(x=>x.addedNodes.length))refresh();})' +
         '.observe(document.documentElement,{childList:true,subtree:true});' +
@@ -183,32 +226,31 @@
     signal('css-applied', 'CSS : ' + activeCss.length + ' caractères ; ' + documentCount +
       ' document(s) accessible(s), ' + childFrames.size + ' sous-document(s) connecté(s).');
   }
-  // En mode agrandi/plein écran, conserver la géométrie calculée par H5P
-  // et réduire uniformément la scène lorsque sa hauteur dépasse le viewport.
-  // Les coordonnées de hotspots sont ainsi transformées avec la carte.
+  // Le scale() global du lot 3.3 rétrécissait également les boutons,
+  // les fenêtres et les textes et déformait les hotspots Game Map. On laisse
+  // désormais H5P déterminer la géométrie de la carte avec son propre
+  // main.setFullscreen(), exactement comme son gestionnaire d'événement.
+  // Les autres contenus gardent leurs dimensions naturelles et défilent.
   function applyHeightFit() {
-    if (fitInProgress) return;
     const container = document.getElementById('h5p-container');
     if (!container) return;
-    fitInProgress = true;
-    try {
-      container.style.transform = '';
-      container.style.transformOrigin = '';
-      document.documentElement.classList.toggle('preview-fit-height', fitToHeight);
-      if (!fitToHeight) return;
-      // Le dimensionnement est mesuré après annulation du transform précédent.
-      const width = Math.max(container.scrollWidth, container.getBoundingClientRect().width);
-      const height = Math.max(container.scrollHeight, container.getBoundingClientRect().height);
-      const availableHeight = Math.max(200, window.innerHeight - 18);
-      const availableWidth = Math.max(200, window.innerWidth - 18);
-      if (!(width > 0 && height > 0)) return;
-      const scale = Math.min(1, availableHeight / height, availableWidth / width);
-      container.style.transformOrigin = 'center top';
-      container.style.transform = 'scale(' + Math.max(.1, scale).toFixed(5) + ')';
-      signal('fit', 'Ajustement en hauteur : ' + Math.round(scale * 100) +
-        ' % (contenu ' + Math.round(width) + ' × ' + Math.round(height) +
-        ' ; fenêtre ' + Math.round(availableWidth) + ' × ' + Math.round(availableHeight) + ').');
-    } finally { fitInProgress = false; }
+    container.style.transform = '';
+    container.style.transformOrigin = '';
+    document.documentElement.classList.toggle('preview-fit-height', fitToHeight);
+    document.documentElement.classList.toggle('preview-game-map', isGameMap);
+    const geometry = (fitToHeight ? '1' : '0') + ':' + innerWidth + ':' + innerHeight;
+    if (geometry !== lastRootLayoutGeometry) {
+      lastRootLayoutGeometry = geometry;
+      applyGameMapLayout(fitToHeight);
+      sendLayoutToChildren();
+    }
+    const mode = isGameMap ? 'Game Map : redimensionnement H5P natif sollicité'
+      : 'Contenu générique : tailles naturelles conservées';
+    const diagnostic = (fitToHeight ? 'Mode agrandi' : 'Mode normal') + ' ; ' + mode;
+    if (diagnostic !== lastRequestedLayoutDiagnostic) {
+      lastRequestedLayoutDiagnostic = diagnostic;
+      signal('fit', diagnostic);
+    }
   }
   function scheduleHeightFit() {
     if (!fitToHeight || fitSchedule) return;
@@ -361,6 +403,11 @@
       if (!/^(h5p|player|custom)\//.test(item.path) || entries.has(item.path)) throw Error('Chemin de ressource invalide ou dupliqué.');
       entries.set(item.path, {data:item.data,blobUrl:null});
     }
+    try {
+      const manifest = entries.get('h5p/h5p.json');
+      const metadata = manifest ? JSON.parse(new TextDecoder().decode(manifest.data)) : {};
+      isGameMap = metadata.mainLibrary === 'H5P.GameMap';
+    } catch (_error) { isGameMap = false; }
     installMemoryStorage();
     installChildCssBridge();
     prepareCss();
@@ -468,7 +515,7 @@
     return '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
       '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' blob:' + extraScripts + '; style-src \'unsafe-inline\' blob:; img-src blob: data:' + extraImages + '; font-src blob: data:; media-src blob: data:; connect-src ' + connections + '; frame-src ' + iframeHosts + '; object-src \'none\'; form-action \'none\'; base-uri \'none\'">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<style>body{margin:0;padding:12px;font:16px system-ui;background:white;color:#172033}html.preview-fit-height,html.preview-fit-height body{height:100%;overflow:hidden}html.preview-fit-height body{padding:0}#preview-error{white-space:pre-wrap;color:#992a2a}#preview-error[hidden]{display:none}</style></head>' +
+      '<style>body{margin:0;padding:12px;font:16px system-ui;background:white;color:#172033}html.preview-fit-height,html.preview-fit-height body{height:100%;overflow:auto}html.preview-fit-height body{padding:0}html.preview-fit-height.preview-game-map body{overflow:hidden}html.preview-fit-height.preview-game-map #h5p-container{height:100%}html.preview-fit-height.preview-game-map #h5p-container > *{height:100%;box-sizing:border-box}html.preview-fit-height.preview-game-map #h5p-container iframe{height:100%!important;min-height:0!important}#preview-error{white-space:pre-wrap;color:#992a2a}#preview-error[hidden]{display:none}</style></head>' +
       '<body><div id="preview-error" role="alert" hidden></div><div id="h5p-container"></div><script>' +
       SCRIPT.replaceAll('</script', '<\\/script') + '</script></body></html>';
   }
