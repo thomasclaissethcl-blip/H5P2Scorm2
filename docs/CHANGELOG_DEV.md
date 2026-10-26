@@ -58,3 +58,11 @@ Voir `docs/LOT3_CORRECTIFS_RECETTE.md`. Stockage temporaire, ressources CSS et m
 ## Lot 3.3 (26/10/2026) : correctif expérimental en attente de recette
 
 Ajustement proportionnel de la scène selon la hauteur disponible en plein écran, chargement CSS Blob en plus du pont d'injection, télémétrie CSS/plein écran/CSP et test Chromium spécifique. Lecture YouTube intégrée toujours non résolue ; génération SCORM inchangée.
+
+## Lot 3.6 : permissions internes et secours YouTube (expérimental)
+
+- Délégation explicitée de la permission Fullscreen dans l'iframe et les sous-documents H5P accessibles, sans suppression du sandbox.
+- Diagnostic de disponibilité Fullscreen d'un sous-document H5P lorsqu'il est connecté.
+- Lecteur YouTube de secours (hors activité H5P) après consentement et clic, extraction sûre des IDs, arrêt à la fermeture.
+- Module `src/youtube-preview.js`, tests unitaires et test Chromium sans requête réseau ; invariants SCORM préservés.
+- Réapparition du bouton natif H5P et lecture YouTube dans l'activité toujours non validées.

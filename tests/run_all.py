@@ -35,6 +35,7 @@ def main() -> int:
         ("modules-analyse-parite", [sys.executable, "tests/validate_modules.py"]),
         ("runtime-scorm", [node, "tests/runtime-smoke.mjs"] if node else None),
         ("module-visionneuse", [node, "tests/preview-module.mjs"] if node else None),
+        ("youtube-consentement", [node, "tests/youtube-preview.mjs"] if node else None),
         ("syntaxe-visionneuse", [node, "--check", "src/h5p-preview.js"] if node else None),
         ("syntaxe-frame-isole", [node, "--check", "src/preview-frame.js"] if node else None),
         ("syntaxe-dependances-h5p", [node, "--check", "src/h5p-dependencies.js"] if node else None),

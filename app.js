@@ -169,35 +169,21 @@
     el('previewExpand').disabled = true;
     el('previewFullscreen').disabled = true;
     el('previewEvents').textContent = 'Aucun événement.';
+    closeYoutube();
     if (el('previewVideoFallback')) el('previewVideoFallback').hidden = true;
   }
-  function renderVideoFallback(content) {
-    const wrap = el('previewVideoFallback');
-    const links = el('previewVideoLinks');
-    if (!wrap || !links) return;
-    links.replaceChildren();
-    const found = new Set();
-    function walk(node) {
-      if (!node || typeof node !== 'object') return;
-      if (Array.isArray(node)) { node.forEach(walk); return; }
-      if (typeof node.path === 'string' && /video\/youtube/i.test(node.mime || '')) {
-        try {
-          const url = new URL(node.path);
-          if (url.protocol === 'https:' && ['youtube.com','www.youtube.com','youtu.be'].includes(url.hostname)) found.add(url.href);
-        } catch (_error) {}
-      }
-      for (const value of Object.values(node)) if (value && typeof value === 'object') walk(value);
-    }
-    walk(content);
-    for (const [index, url] of [...found].entries()) {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.textContent = 'Ouvrir la vidéo ' + (index + 1) + ' sur YouTube';
-      a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
-      li.appendChild(a); links.appendChild(li);
-    }
-    wrap.hidden = found.size === 0;
+  let youtubePlayer = null;
+  function youtubeController() {
+    if (!youtubePlayer) youtubePlayer = modules.youtubePreview.createController({
+      wrap:el('previewVideoFallback'),links:el('previewVideoLinks'),
+      surface:el('previewYoutubeSurface'),iframe:el('previewYoutubePlayer'),
+      title:el('previewYoutubeTitle'),closeButton:el('previewYoutubeClose'),
+      consent:el('previewExternalVideos')
+    });
+    return youtubePlayer;
   }
+  function closeYoutube() { if (youtubePlayer) youtubePlayer.close(); }
+  function renderVideoFallback(content) { youtubeController().render(content); }
   async function launchPreview() {
     if (!state.analysis?.ok || !state.zip) return;
     const sequence = ++previewSequence;

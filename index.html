@@ -148,9 +148,21 @@
       <p id="previewStatus" class="muted" role="status" aria-live="polite">Importez un H5P valide pour afficher l'aperçu.</p>
       <div id="previewViewport" class="preview-viewport">
         <button id="previewCollapse" type="button" hidden aria-label="Fermer l'aperçu agrandi">Réduire l'aperçu</button>
-        <iframe id="previewFrame" title="Aperçu interactif du contenu H5P" sandbox="allow-scripts" allow="fullscreen" allowfullscreen referrerpolicy="no-referrer" loading="eager"></iframe>
+        <iframe id="previewFrame" title="Aperçu interactif du contenu H5P" sandbox="allow-scripts" allow="fullscreen *" allowfullscreen referrerpolicy="no-referrer" loading="eager"></iframe>
       </div>
       <label class="preview-external-option"><input id="previewExternalVideos" type="checkbox"> Autoriser les vidéos YouTube externes dans l'aperçu (expérimental, connexion aux serveurs YouTube)</label>
+      <section id="previewVideoFallback" class="preview-video-fallback" aria-label="Vidéos externes du contenu" hidden>
+        <h3>Vidéos YouTube du contenu</h3>
+        <p>Le lecteur YouTube intégré au H5P peut être bloqué par l'isolation de l'aperçu. Vous pouvez consulter les vidéos ici, en dehors de l'activité H5P. Cette lecture de secours n'est pas prise en compte dans les résultats xAPI.</p>
+        <ul id="previewVideoLinks"></ul>
+        <div id="previewYoutubeSurface" class="preview-youtube-surface" hidden>
+          <div class="row between">
+            <p id="previewYoutubeTitle">Lecteur vidéo externe</p>
+            <button id="previewYoutubeClose" type="button">Fermer la vidéo</button>
+          </div>
+          <iframe id="previewYoutubePlayer" title="Vidéo YouTube externe" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </section>
       <details class="preview-details">
         <summary>Diagnostic de prévisualisation</summary>
         <p class="muted">Les événements xAPI sont affichés à titre informatif. Aucune note n'est envoyée à un LMS.</p>
@@ -202,6 +214,7 @@
   <script src="src/h5p-analysis.js"></script>
   <script src="src/preview-frame.js"></script>
   <script src="src/h5p-preview.js"></script>
+  <script src="src/youtube-preview.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

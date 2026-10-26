@@ -1,0 +1,24 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context={URL,console};context.globalThis=context;vm.createContext(context);
+vm.runInContext(fs.readFileSync(new URL('../src/youtube-preview.js',import.meta.url),'utf8'),context);
+const {videoId,findVideos,embedUrl}=context.H5PConverterModules.youtubePreview;
+assert.equal(videoId('https://www.youtube.com/watch?v=_Ng4pyFqZyI'),'_Ng4pyFqZyI');
+assert.equal(videoId('https://youtu.be/Mfwuqo47bwg'),'Mfwuqo47bwg');
+assert.equal(videoId('https://www.youtube-nocookie.com/embed/_Ng4pyFqZyI'),'_Ng4pyFqZyI');
+for(const url of ['http://youtube.com/watch?v=_Ng4pyFqZyI','https://evil.youtube.com/watch?v=_Ng4pyFqZyI','https://youtube.com.evil.org/watch?v=_Ng4pyFqZyI', 'javascript:alert(1)','https://youtube.com/watch?v=%3Cscript%3E','https://user:pass@youtube.com/watch?v=_Ng4pyFqZyI'])
+  assert.equal(videoId(url),null,'URL acceptée : '+url);
+const content={contents:[{video:{files:[{path:'https://www.youtube.com/watch?v=_Ng4pyFqZyI',mime:'video/YouTube'}]}},{video:{files:[{path:'https://youtu.be/Mfwuqo47bwg',mime:'video/YouTube'},{path:'https://youtube.com.evil.test/watch?v=Mfwuqo47bwg',mime:'video/YouTube'}]}}]};
+const ids=Array.from(findVideos(content));
+assert.deepEqual(ids.sort(),['_Ng4pyFqZyI','Mfwuqo47bwg'].sort());
+assert.equal(embedUrl('bad'),null);
+assert.equal(embedUrl('_Ng4pyFqZyI'),'https://www.youtube-nocookie.com/embed/_Ng4pyFqZyI?rel=0&playsinline=1');
+const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+assert(html.includes('src="src/youtube-preview.js"'));
+assert(html.includes('id="previewYoutubeSurface"'));
+assert(html.includes('referrerpolicy="strict-origin-when-cross-origin"'));
+assert(html.includes('sandbox="allow-scripts"'));
+assert(!html.includes('sandbox="allow-scripts allow-same-origin"'));
+assert(html.includes('allow="fullscreen *"'));
+console.log('YouTube : ID validés, URLs dangereuses refusées, contrôle de consentement et isolation de la page.');

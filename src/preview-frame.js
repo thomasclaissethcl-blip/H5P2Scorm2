@@ -124,6 +124,15 @@
         observer.observe(doc.documentElement, {childList:true,subtree:true});
       }
       for (const iframe of doc.querySelectorAll('iframe')) {
+        // Déléguer le fullscreen aux sous-documents H5P. Le sandbox à origine
+        // opaque de l'aperçu principal reste inchangé.
+        try {
+          const source = iframe.getAttribute('src') || '';
+          if (!/^https?:/i.test(source)) {
+            iframe.allowFullscreen = true;
+            iframe.setAttribute('allow','fullscreen *');
+          }
+        } catch (_error) {}
         if (!registeredFrames.has(iframe)) {
           registeredFrames.add(iframe);
           iframe.addEventListener('load', scheduleStyleScan);
@@ -176,6 +185,13 @@
     if (lastConfirmedLayoutDiagnostic !== message) { lastConfirmedLayoutDiagnostic = message; signal('fit', message); }
   });
   window.addEventListener('message', event => {
+    if (event.data?.channel !== 'h5p-preview-child-fullscreen' || event.data?.key !== childKey) return;
+    if (!event.source || !childFrames.has(event.source)) return;
+    signal('fullscreen-info','Iframe H5P : fullscreenEnabled='+String(event.data.fullscreenEnabled)+
+      ' ; H5P.fullscreenSupported='+String(event.data.supported)+
+      ' ; iframe H5P='+String(event.data.framed));
+  });
+  window.addEventListener('message', event => {
     if (event.data?.channel !== 'h5p-preview-child-ready' || event.data?.key !== childKey) return;
     if (event.source === parent || !event.source) return;
     childFrames.add(event.source);
@@ -217,6 +233,9 @@
       'new MutationObserver(function(changes){if(changes.some(x=>x.addedNodes.length))refresh();})' +
         '.observe(document.documentElement,{childList:true,subtree:true});' +
       'parent.postMessage({channel:"h5p-preview-child-ready",key:KEY},"*");' +
+      'setTimeout(function(){parent.postMessage({channel:"h5p-preview-child-fullscreen",key:KEY,' +
+        'fullscreenEnabled:document.fullscreenEnabled,supported:window.H5P?.fullscreenSupported,' +
+        'framed:window.H5P?.isFramed},"*");},250);' +
     '})();';
     const text = new TextDecoder().decode(file.data);
     file.data = new TextEncoder().encode(text + '\n' + childCode).buffer;

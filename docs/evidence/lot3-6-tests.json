@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-10-26T14:21:01.246505+00:00",
+  "scope": "Lot 3 : socle V1.0.1, modules lot 2, prototype de visionneuse, isolation, cache et contrôle SCORM",
+  "python": "3.13.5",
+  "node": "v22.16.0",
+  "summary": {
+    "passed": 14,
+    "failed": 0,
+    "total": 14
+  },
+  "results": [
+    {
+      "test": "fixtures-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": "OK poc-valid.h5p\nOK poc-language.h5p\nOK poc-resume.h5p\nOK poc-missing-dependency.h5p\nOK poc-invalid.h5p\nOK poc-coreapi-future.h5p (blocage Core API attendu)"
+    },
+    {
+      "test": "coherence-release",
+      "status": "success",
+      "return_code": 0,
+      "output": "Release 1.0.1 cohérente : OK"
+    },
+    {
+      "test": "structure-interface",
+      "status": "success",
+      "return_code": 0,
+      "output": "Interface V1 : OK"
+    },
+    {
+      "test": "modules-analyse-parite",
+      "status": "success",
+      "return_code": 0,
+      "output": "Parité analyse V1 : poc-coreapi-future.h5p OK (bloqué)\nParité analyse V1 : poc-invalid.h5p OK (bloqué)\nParité analyse V1 : poc-language.h5p OK (valide)\nParité analyse V1 : poc-missing-dependency.h5p OK (bloqué)\nParité analyse V1 : poc-resume.h5p OK (valide)\nParité analyse V1 : poc-valid.h5p OK (valide)\nDépendances cycliques/transitives, Core API future et invalide : OK\nContrats des modules et absence de DOM : OK"
+    },
+    {
+      "test": "runtime-scorm",
+      "status": "success",
+      "return_code": 0,
+      "output": "Runtime SCORM généré : OK"
+    },
+    {
+      "test": "module-visionneuse",
+      "status": "success",
+      "return_code": 0,
+      "output": "Module visionneuse : chemins, CSP, ressources, cache lecteur OK"
+    },
+    {
+      "test": "youtube-consentement",
+      "status": "success",
+      "return_code": 0,
+      "output": "YouTube : ID validés, URLs dangereuses refusées, contrôle de consentement et isolation de la page."
+    },
+    {
+      "test": "syntaxe-visionneuse",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-frame-isole",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-dependances-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-modules-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-profils-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-javascript",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "archive-source",
+      "status": "success",
+      "return_code": 0,
+      "output": "Archive originale V1.0.1 et SHA-256 : OK"
+    }
+  ],
+  "limitations": [
+    "Tests principalement unitaires et structurels, pas de validation de lecture H5P dans un vrai navigateur.",
+    "Aucune exécution du SCORM dans Moodle ou dans un autre LMS.",
+    "Visionneuse expérimentale : tests navigateur avec substitut, aucun vrai H5P Standalone ni contenu H5P complexe validé dans cet environnement.",
+    "Les exports HTML futurs ne sont pas encore développés."
+  ]
+}
