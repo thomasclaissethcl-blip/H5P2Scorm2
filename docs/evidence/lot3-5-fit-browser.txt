@@ -1,0 +1,1 @@
+OK : Game Map sollicite sa mise en page native, tailles interactives préservées, retour normal, sandbox inchangé

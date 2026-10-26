@@ -14,6 +14,9 @@ async start(element,options){
  const inline=document.createElement('button');inline.id='outer-hotspot';
  inline.textContent='Point';inline.style.cssText='width:85px;height:40px';
  wrap.appendChild(inline);element.appendChild(wrap);
+ const rule=document.createElement('style');rule.textContent='.h5p-fullscreen .h5p-game-map-overlay-dialog-instance-container{overflow-y:auto!important}';document.head.appendChild(rule);
+ const rootDialog=document.createElement('div');rootDialog.id='root-dialog';rootDialog.className='h5p-game-map-overlay-dialog-instance-container';
+ rootDialog.style.cssText='height:100px;overflow:hidden';rootDialog.innerHTML='<div style="height:550px">Long contenu</div>';element.appendChild(rootDialog);
  const childCode=await (await fetch(options.frameJs)).text();
  const nested=document.createElement('iframe');nested.id='game-frame';
  nested.style.cssText='display:block;width:100%;height:90%';
@@ -21,7 +24,9 @@ async start(element,options){
    window.__gameLayout=enabled;const map=document.getElementById('game-map');
    map.style.height=enabled?'70vh':'1000px';
  },resize(){window.__gameResizes=(window.__gameResizes||0)+1;}}}]};`;
- nested.srcdoc='<html><body><div id="game-map" style="height:1000px"><button id="hotspot" style="width:90px;height:44px">Stage</button></div>'+
+ nested.srcdoc='<html><head><style>.h5p-fullscreen .h5p-game-map-overlay-dialog-instance-container{overflow-y:auto!important}</style></head><body>'+
+   '<div id="game-map" style="height:1000px"><button id="hotspot" style="width:90px;height:44px">Stage</button></div>'+
+   '<div class="h5p-game-map-overlay-dialog-instance-container" id="test-dialog" style="height:100px;overflow:hidden"><div style="height:550px">Contenu long</div></div>'+
    '<script>'+gameScript+'</script><script>'+childCode.replaceAll('</script','<\/script')+'</script></body></html>';
  element.appendChild(nested);
  window.H5P={fullscreenSupported:false,instances:[],externalDispatcher:{on(){}}};
@@ -54,11 +59,20 @@ def main():
   assert child.locator('#hotspot').evaluate('node=>node.getBoundingClientRect().height')==44, 'Hotspot redimensionné'
   assert child.locator('body').evaluate('()=>window.__gameLayout') is True, 'Mode Game Map non reçu par le sous-document'
   assert child.locator('#game-map').evaluate('node=>node.style.height')=='70vh'
+  assert child.locator('html').evaluate('node=>node.classList.contains("h5p-fullscreen")'), 'Etat CSS fullscreen absent du sous-document'
+  assert child.locator('#test-dialog').evaluate('node=>getComputedStyle(node).overflowY')=='auto', 'Dialogue Game Map non defilable'
+  assert child.locator('#test-dialog').evaluate('node=>{node.scrollTop=90;return node.scrollTop}')>0, 'Scroll reel du dialogue inactif'
+  assert parent.locator('html').evaluate('node=>node.classList.contains("h5p-fullscreen")'), 'Etat CSS fullscreen absent de la visionneuse'
+  assert parent.locator('#root-dialog').evaluate('node=>getComputedStyle(node).overflowY')=='auto', 'Dialogue Game Map racine non defilable'
+  assert parent.locator('#root-dialog').evaluate('node=>{node.scrollTop=90;return node.scrollTop}')>0
   child.locator('#hotspot').click()
   page.evaluate('window.__pv.setFitHeight(false)')
   page.wait_for_timeout(350)
   assert child.locator('body').evaluate('()=>window.__gameLayout') is False
   assert child.locator('#game-map').evaluate('node=>node.style.height')=='1000px'
+  assert not child.locator('html').evaluate('node=>node.classList.contains("h5p-fullscreen")'), 'Etat CSS fullscreen non retire a la sortie'
+  assert child.locator('#test-dialog').evaluate('node=>getComputedStyle(node).overflowY')=='hidden'
+  assert parent.locator('#root-dialog').evaluate('node=>getComputedStyle(node).overflowY')=='hidden'
   assert parent.locator('#h5p-container').evaluate('node=>getComputedStyle(node).transform')=='none'
   assert page.evaluate("document.querySelector('#preview').getAttribute('sandbox')")=='allow-scripts'
   browser.close()

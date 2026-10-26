@@ -28,6 +28,7 @@
   let lastConfirmedLayoutDiagnostic = '';
   let lastRootLayoutGeometry = '';
   let securityWarningCount = 0;
+  const reportedBlockedResources = new Set();
   function signal(type, text) {
     parent.postMessage({channel:'h5p-preview',token,type,message:String(text || '').slice(0,350)}, '*');
   }
@@ -194,6 +195,10 @@
         'if(document.head.lastElementChild!==style)document.head.appendChild(style);}' +
       'let layoutEnabled=false;let pendingLayout=false;let lastLayoutGeometry=null;' +
       'function applyLayout(){' +
+        // Game Map active le défilement vertical des dialogues uniquement
+        // sous un ancêtre .h5p-fullscreen. Le vrai fullscreen H5P étant
+        // indisponible dans l’iframe opaque, reproduire uniquement cet état CSS.
+        'document.documentElement.classList.toggle("h5p-fullscreen",layoutEnabled);' +
         'const instances=window.H5P?.instances||[];let applied=false;' +
         'const geometry=(layoutEnabled?"1":"0")+":"+innerWidth+":"+innerHeight;' +
         'if(geometry===lastLayoutGeometry)return;' +
@@ -238,6 +243,10 @@
     container.style.transformOrigin = '';
     document.documentElement.classList.toggle('preview-fit-height', fitToHeight);
     document.documentElement.classList.toggle('preview-game-map', isGameMap);
+    // Les dialogues de Game Map ne défilent nativement qu'avec la classe
+    // h5p-fullscreen. setFullscreen() ne positionne pas cette classe : le Core
+    // H5P l'ajoute habituellement lors d'un véritable plein écran.
+    document.documentElement.classList.toggle('h5p-fullscreen', fitToHeight && isGameMap);
     const geometry = (fitToHeight ? '1' : '0') + ':' + innerWidth + ':' + innerHeight;
     if (geometry !== lastRootLayoutGeometry) {
       lastRootLayoutGeometry = geometry;
@@ -491,12 +500,18 @@
     }
   });
   document.addEventListener('securitypolicyviolation', event => {
-    if (securityWarningCount++ >= 12) return;
+    const directive = String(event.violatedDirective || 'ressource');
+    const blocked = String(event.blockedURI || 'document');
+    const key = directive + ':' + blocked;
+    if (reportedBlockedResources.has(key) || securityWarningCount >= 12) return;
+    reportedBlockedResources.add(key);
+    securityWarningCount++;
     let source = 'non identifié';
-    try { source = new URL(event.blockedURI).hostname || 'document'; }
-    catch (_error) { source = String(event.blockedURI || 'document').split(':')[0]; }
-    signal('resource-blocked', 'CSP : ' + String(event.violatedDirective || 'ressource') +
-      ' bloqué (' + source + ').');
+    try {
+      const uri = new URL(blocked);
+      source = uri.hostname + (uri.hostname === 'preview.invalid' ? uri.pathname.slice(0, 120) : '');
+    } catch (_error) { source = blocked.split(':')[0]; }
+    signal('resource-blocked', 'CSP : ' + directive + ' bloqué (' + source + ').');
   });
   window.addEventListener('unload', () => {resizeObserver?.disconnect();objectUrls.forEach(url => URL.revokeObjectURL(url));});
   parent.postMessage({channel:'h5p-preview-boot'},'*');
