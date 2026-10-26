@@ -1,0 +1,12 @@
+# Python / local development
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.DS_Store
+Thumbs.db
+
+# Local test output: versioned baseline proof is kept in docs/evidence/
+artifacts/
+coverage/
+dist/

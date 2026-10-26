@@ -1,0 +1,27 @@
+name: Régression V1 et provenance
+
+on:
+  push:
+    branches: [main, 'development/**']
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests et rapport
+        run: python tests/run_all.py --report artifacts/regression.json
+      - name: Archiver la preuve des tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-regression
+          path: artifacts/regression.json
+          if-no-files-found: warn
