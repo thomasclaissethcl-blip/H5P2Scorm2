@@ -138,9 +138,15 @@
   const preview = modules.preview.createPreview({
     frame: el('previewFrame'), status: el('previewStatus'),
     onEvent(event) {
+      if (event.type === 'xapi-ready') {
+        el('previewEvents').textContent='Écoute xAPI active. Réalisez un exercice pour observer les événements.';
+      }
+      if (event.type === 'xapi-unavailable') {
+        el('previewEvents').textContent='Écoute xAPI indisponible avec ce lecteur.';
+      }
       if (event.type === 'xapi') {
         const node = el('previewEvents');
-        if (node.textContent === 'Aucun événement.') node.textContent = '';
+        if (node.textContent.startsWith('Aucun événement.') || node.textContent.startsWith('Écoute xAPI active.')) node.textContent = '';
         node.textContent += `${new Date().toLocaleTimeString('fr-FR')} : ${event.message}\n`;
       }
     }
@@ -175,6 +181,7 @@
         __css:[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n')
       };
       await preview.open({zip:state.zip,replacements,assetLoader:loadPreviewPlayer,
+        allowYoutube:Boolean(el('previewExternalVideos')?.checked),
         onProgress(message) { if (sequence === previewSequence) el('previewStatus').textContent = message; }});
     } catch (error) {
       if (sequence === previewSequence) el('previewStatus').textContent = 'Aperçu indisponible : '+error.message;
@@ -722,18 +729,34 @@
     const file = cssFile.files?.[0];
     state.importedCss = file ? await file.text() : '';
     if (file) logLine(`CSS importé : ${file.name}`);
-    void launchPreview();
+    updatePreviewCss();
   });
 
+  function updatePreviewCss() {
+    preview.updateCss([state.importedCss,el('cssText').value].filter(Boolean).join('\n\n'));
+  }
   el('cssText').addEventListener('input', () => {
     clearTimeout(cssDebounce);
-    cssDebounce = setTimeout(() => { void launchPreview(); }, 850);
+    cssDebounce = setTimeout(updatePreviewCss, 180);
   });
   el('previewRestart').addEventListener('click', () => { void launchPreview(); });
+  function setPreviewExpanded(expanded) {
+    const viewport=el('previewViewport');
+    viewport.classList.toggle('preview-is-expanded',expanded);
+    el('previewExpand').textContent=expanded ? 'Réduire' : 'Agrandir';
+    document.body.classList.toggle('preview-expanded',expanded);
+    el('previewCollapse').hidden=!expanded;
+    preview.notifyResize();
+  }
+  el('previewCollapse').addEventListener('click', () => setPreviewExpanded(false));
+  el('previewExternalVideos').addEventListener('change', () => {void launchPreview();});
   el('previewExpand').addEventListener('click', () => {
-    const viewport = el('previewViewport');
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else if (viewport.requestFullscreen) void viewport.requestFullscreen();
+    setPreviewExpanded(!el('previewViewport').classList.contains('preview-is-expanded'));
+  });
+  document.addEventListener?.('keydown', event => {
+    if (event.key === 'Escape' && el('previewViewport').classList.contains('preview-is-expanded')) {
+      setPreviewExpanded(false);
+    }
   });
 
   el('languageOverride').addEventListener('change', async () => {

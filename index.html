@@ -146,14 +146,16 @@
       </div>
       <p id="previewStatus" class="muted" role="status" aria-live="polite">Importez un H5P valide pour afficher l'aperçu.</p>
       <div id="previewViewport" class="preview-viewport">
-        <iframe id="previewFrame" title="Aperçu interactif du contenu H5P" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="eager"></iframe>
+        <button id="previewCollapse" type="button" hidden aria-label="Fermer l'aperçu agrandi">Réduire l'aperçu</button>
+        <iframe id="previewFrame" title="Aperçu interactif du contenu H5P" sandbox="allow-scripts" allow="fullscreen" allowfullscreen referrerpolicy="no-referrer" loading="eager"></iframe>
       </div>
+      <label class="preview-external-option"><input id="previewExternalVideos" type="checkbox"> Autoriser les vidéos YouTube externes dans l'aperçu (expérimental, connexion aux serveurs YouTube)</label>
       <details class="preview-details">
         <summary>Diagnostic de prévisualisation</summary>
         <p class="muted">Les événements xAPI sont affichés à titre informatif. Aucune note n'est envoyée à un LMS.</p>
         <pre id="previewEvents" class="preview-events">Aucun événement.</pre>
       </details>
-      <p class="muted preview-caveat">Cette version expérimentale télécharge le lecteur 3.8.2 lors du premier aperçu, puis utilise les ressources H5P en mémoire. Le cadre bloque les connexions réseau et les sous-frames, ce qui peut limiter certains types d'activités.</p>
+      <p class="muted preview-caveat">Cette version expérimentale télécharge le lecteur 3.8.2 lors du premier aperçu, puis utilise les ressources H5P en mémoire. Par défaut, le cadre bloque les connexions réseau et les sous-frames. Les vidéos YouTube ne sont tentées qu'après consentement explicite. Certains contenus peuvent rester incompatibles avec les restrictions de sécurité du navigateur.</p>
     </section>
 
     <section class="panel">

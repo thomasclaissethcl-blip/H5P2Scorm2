@@ -12,6 +12,9 @@
   const objectUrls = [];
   let token = '';
   let started = false;
+  let customStyle = null;
+  let resizeObserver = null;
+  let lastHeight = 0;
   function signal(type, text) {
     parent.postMessage({channel:'h5p-preview',token,type,message:String(text || '').slice(0,350)}, '*');
   }
@@ -53,6 +56,53 @@
       return resolved ? 'url("' + resolved + '")' : 'url("about:blank")';
     });
   }
+  // Les H5P anciens accèdent parfois à localStorage. Une iframe à origine
+  // opaque n'y a pas droit. Fournir un stockage volatil et privé, sans
+  // réutiliser les données du site hôte ni affaiblir le sandbox.
+  function installMemoryStorage() {
+    function store() {
+      const values = new Map();
+      return {
+        get length() { return values.size; },
+        key(index) { return Array.from(values.keys())[index] ?? null; },
+        getItem(key) { return values.has(String(key)) ? values.get(String(key)) : null; },
+        setItem(key, value) { values.set(String(key), String(value)); },
+        removeItem(key) { values.delete(String(key)); },
+        clear() { values.clear(); }
+      };
+    }
+    for (const key of ['localStorage', 'sessionStorage']) {
+      try { Object.defineProperty(window, key, {configurable:true, get:()=>storage[key]}); }
+      catch (_err) { signal('warning', 'Stockage temporaire non disponible : ' + key); }
+    }
+    const storage = {localStorage:store(),sessionStorage:store()};
+  }
+  function rewriteCssUrls(source, base = ROOT + 'h5p/content/') {
+    return String(source).replace(/url\(\s*(['"]?)([^)'"\s]+)\1\s*\)/gi, (match, quote, path) => {
+      if (path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('#')) return match;
+      const resolved = virtualUrl(path, base);
+      return resolved ? 'url("' + resolved + '")' : match;
+    });
+  }
+  function applyCss(text) {
+    if (!customStyle) {
+      customStyle = document.createElement('style');
+      customStyle.id = 'preview-custom-css-live';
+      document.head.appendChild(customStyle);
+    }
+    customStyle.textContent = rewriteCssUrls(text);
+  }
+  function reportHeight() {
+    const container = document.getElementById('h5p-container');
+    // Mesurer le contenu H5P lui-même et non la hauteur de la fenêtre :
+    // autrement une activité qui occupe toute l'iframe crée une boucle
+    // d'agrandissement à chaque message de redimensionnement.
+    const wanted = Math.ceil(container?.scrollHeight || 0);
+    const height = Math.max(640, Math.min(wanted + 28, 1400));
+    if (Math.abs(height-lastHeight)<32) return;
+    lastHeight=height;
+    parent.postMessage({channel:'h5p-preview',token,type:'height',height},'*');
+  }
   function prepareCss() {
     for (const [path, item] of entries) {
       if (!path.endsWith('.css')) continue;
@@ -62,6 +112,25 @@
     }
   }
   function installVirtualAccess() {
+    // Les images de carte H5P peuvent être insérées via style.backgroundImage,
+    // setProperty ou un attribut style, et non uniquement via <img src>.
+    for (const property of ['backgroundImage','background']) {
+      const descriptor = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, property);
+      if (descriptor?.set && descriptor?.get && descriptor.configurable) {
+        Object.defineProperty(CSSStyleDeclaration.prototype, property, {
+          configurable:true, enumerable:descriptor.enumerable,
+          get(){return descriptor.get.call(this);},
+          set(value){return descriptor.set.call(this, rewriteCssUrls(value));}
+        });
+      }
+    }
+    const nativeSetProperty = CSSStyleDeclaration.prototype.setProperty;
+    CSSStyleDeclaration.prototype.setProperty = function(name, value, priority) {
+      if (String(name).toLowerCase().includes('background') || String(value).includes('url(')) {
+        value = rewriteCssUrls(value);
+      }
+      return nativeSetProperty.call(this, name, value, priority);
+    };
     const nativeFetch = window.fetch.bind(window);
     window.fetch = async (input, init) => {
       const value = typeof input === 'string' ? input : input?.url;
@@ -89,9 +158,14 @@
     }
     const originalSetAttribute = Element.prototype.setAttribute;
     Element.prototype.setAttribute = function(name,value) {
-      if (['src','href','poster'].includes(String(name).toLowerCase())) {
-        value = virtualUrl(value) || value;
-      }
+      const attr = String(name).toLowerCase();
+      if (['src','href','poster','xlink:href'].includes(attr)) value = virtualUrl(value) || value;
+      if (attr === 'style') value = rewriteCssUrls(value);
+      if (attr === 'srcset') value = String(value).split(',').map(part => {
+        const fields = part.trim().split(/\s+/);
+        if (fields.length) fields[0] = virtualUrl(fields[0]) || fields[0];
+        return fields.join(' ');
+      }).join(', ');
       return originalSetAttribute.call(this,name,value);
     };
     // Adaptateur XHR en mémoire. Aucun accès natif au réseau n'est autorisé.
@@ -132,6 +206,27 @@
         if(this.async)queueMicrotask(run);else run();
       }
     };
+    // Les insertions par innerHTML ne passent pas par nos setters JavaScript.
+    // Corriger a posteriori les attributs et styles des nouveaux noeuds.
+    let scheduled = false;
+    function patchTree(node) {
+      if (!(node instanceof Element)) return;
+      for (const element of [node, ...node.querySelectorAll('[src],[href],[poster],[srcset],[style]')]) {
+        for (const attr of ['src','href','poster','srcset','style']) {
+          if (!element.hasAttribute(attr)) continue;
+          const original = element.getAttribute(attr);
+          if (original !== null) element.setAttribute(attr, original);
+        }
+      }
+    }
+    new MutationObserver(mutations => {
+      if (scheduled) return;
+      if (!mutations.some(m => m.addedNodes.length)) return;
+      scheduled = true;
+      queueMicrotask(() => {scheduled = false; for (const m of mutations) {
+        for (const node of m.addedNodes) patchTree(node);
+      }});
+    }).observe(document.documentElement, {childList:true, subtree:true});
     void nativeFetch;
   }
   async function boot(payload) {
@@ -139,6 +234,7 @@
       if (!/^(h5p|player|custom)\//.test(item.path) || entries.has(item.path)) throw Error('Chemin de ressource invalide ou dupliqué.');
       entries.set(item.path, {data:item.data,blobUrl:null});
     }
+    installMemoryStorage();
     prepareCss();
     installVirtualAccess();
     const scriptFile = fileBlob('player/main.bundle.js');
@@ -154,17 +250,33 @@
     const opts = {
       h5pJsonPath:ROOT+'h5p',contentJsonPath:ROOT+'h5p/content',librariesPath:ROOT+'h5p',
       frameJs:ROOT+'player/frame.bundle.js',frameCss:ROOT+'player/styles/h5p.css',
-      frame:false,embedType:'div',postUserStatistics:false,saveFreq:false,
+      frame:false,embedType:'div',postUserStatistics:false,saveFreq:false,fullScreen:true,
       customCss:[ROOT+'custom/custom.css']
     };
+    let xapiAttached = false;
+    function attachXapi() {
+      if (xapiAttached || !window.H5P?.externalDispatcher?.on) return false;
+      try {
+        window.H5P.externalDispatcher.on('xAPI', event => {
+          const statement = event?.data?.statement || event?.statement;
+          const verb = String(statement?.verb?.id || '').split('/').pop();
+          const score=statement?.result?.score;
+          const result=(Number.isFinite(score?.raw) && Number.isFinite(score?.max))
+            ? ' (score ' + score.raw + '/' + score.max + ')' : '';
+          signal('xapi', (verb || 'événement H5P') + result);
+        });
+        xapiAttached=true;
+        signal('xapi-ready','Écoute des événements xAPI active.');
+      } catch (_err) { /* L'absence d'un dispatcher n'interrompt pas la lecture. */ }
+      return xapiAttached;
+    }
+    attachXapi();
     await new window.H5PStandalone.H5P(document.getElementById('h5p-container'),opts);
-    try {
-      window.H5P?.externalDispatcher?.on('xAPI', event => {
-        const statement = event?.data?.statement || event?.statement;
-        const verb = String(statement?.verb?.id || '').split('/').pop();
-        signal('xapi', verb || 'événement H5P');
-      });
-    } catch (_err) {}
+    if (!attachXapi() && !xapiAttached) signal('xapi-unavailable','Le lecteur ne fournit pas de dispatcher xAPI accessible.');
+    applyCss(new TextDecoder().decode(entries.get('custom/custom.css')?.data || new ArrayBuffer(0)));
+    reportHeight();
+    resizeObserver = new ResizeObserver(() => reportHeight());
+    resizeObserver.observe(document.getElementById('h5p-container'));
     signal('ready','Activité chargée. Vous pouvez interagir avec le contenu.');
   }
   window.addEventListener('message', event => {
@@ -173,12 +285,27 @@
     token=event.data.token;
     Promise.resolve().then(() => boot(event.data)).catch(error => fail(error?.message || String(error)));
   });
-  window.addEventListener('unload', () => objectUrls.forEach(url => URL.revokeObjectURL(url)));
+  window.addEventListener('message', event => {
+    if (event.source !== parent || !started || event.data?.channel !== 'h5p-preview-control' || event.data?.token !== token) return;
+    if (event.data.action === 'css') applyCss(event.data.css || '');
+    if (event.data.action === 'resize') {window.dispatchEvent(new Event('resize'));reportHeight();}
+  });
+  window.addEventListener('unload', () => {resizeObserver?.disconnect();objectUrls.forEach(url => URL.revokeObjectURL(url));});
   parent.postMessage({channel:'h5p-preview-boot'},'*');
 })();`;
-  function documentSource() {
+  function documentSource(options = {}) {
+    const iframeHosts=options.allowYoutube
+      ? 'https://www.youtube.com https://www.youtube-nocookie.com'
+      : "'none'";
+    const extraScripts=options.allowYoutube
+      ? ' https://www.youtube.com https://www.youtube-nocookie.com https://s.ytimg.com'
+      : '';
+    const extraImages=options.allowYoutube
+      ? ' https://i.ytimg.com https://img.youtube.com'
+      : '';
+    const connections=options.allowYoutube ? 'https://www.youtube.com' : "'none'";
     return '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
-      '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' blob:; style-src \'unsafe-inline\' blob:; img-src blob: data:; font-src blob: data:; media-src blob: data:; connect-src \'none\'; frame-src \'none\'; object-src \'none\'; form-action \'none\'; base-uri \'none\'">' +
+      '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' blob:' + extraScripts + '; style-src \'unsafe-inline\' blob:; img-src blob: data:' + extraImages + '; font-src blob: data:; media-src blob: data:; connect-src ' + connections + '; frame-src ' + iframeHosts + '; object-src \'none\'; form-action \'none\'; base-uri \'none\'">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<style>body{margin:0;padding:12px;font:16px system-ui;background:white;color:#172033}#preview-error{white-space:pre-wrap;color:#992a2a}#preview-error[hidden]{display:none}</style></head>' +
       '<body><div id="preview-error" role="alert" hidden></div><div id="h5p-container"></div><script>' +

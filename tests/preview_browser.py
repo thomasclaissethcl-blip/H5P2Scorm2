@@ -14,6 +14,17 @@ PLAYER_MOCK = r'''window.H5PStandalone = { H5P: class {
     const data = await r.json();
     const css = document.createElement('link');css.rel='stylesheet';
     css.href=options.customCss[0]; document.head.appendChild(css);
+    // Une activité H5P qui lit localStorage doit trouver un stockage privé temporaire.
+    window.__storageOk=false;
+    window.localStorage.setItem('test','valeur');
+    window.__storageOk=window.localStorage.getItem('test')==='valeur';
+    window.__initCount=(window.__initCount || 0)+1;
+    const background=document.createElement('div');background.id='background';
+    background.style.backgroundImage='url(https://preview.invalid/h5p/content/picture.png)';
+    element.appendChild(background);
+    const markup=document.createElement('div');markup.id='markup';
+    markup.innerHTML='<img class="inserted-image" src="https://preview.invalid/h5p/content/picture.png">';
+    element.appendChild(markup);
     const image=document.createElement('img');image.alt='image h5p';
     image.src='https://preview.invalid/h5p/content/picture.png';
     element.appendChild(image);
@@ -21,6 +32,9 @@ PLAYER_MOCK = r'''window.H5PStandalone = { H5P: class {
     button.className='h5p-button';button.textContent=data.title;
     button.onclick=()=>{button.textContent='Réponse validée';};
     element.appendChild(button);
+    window.H5P={externalDispatcher:{on(type, callback){
+      button.addEventListener('click',()=>callback({data:{statement:{verb:{id:'http://adlnet.gov/expapi/verbs/answered'}}}}));
+    }}};
     const xhr = new XMLHttpRequest();
     xhr.open('GET', options.contentJsonPath+'/content.json');
     xhr.onload = ()=>{window.__xhrOk = xhr.status===200 && xhr.responseText==='{}';};
@@ -68,10 +82,17 @@ def main():
         page.wait_for_function("document.querySelector('#status').textContent.includes('Activité chargée')",timeout=15000)
         frame=page.frame_locator('#preview')
         assert frame.locator('#exercise').inner_text() == 'Activité fictive'
+        assert frame.locator('body').evaluate('()=>window.__storageOk') is True
+        assert frame.locator('#background').evaluate('(el)=>el.style.backgroundImage.includes("blob:")')
+        assert frame.locator('.inserted-image').evaluate('(el)=>el.getAttribute("src").startsWith("blob:")')
+        assert frame.locator('body').evaluate('()=>window.__initCount')==1
         assert frame.locator('#exercise').evaluate('(el)=>getComputedStyle(el).color')=='rgb(5, 90, 110)'
         frame.locator('#exercise').click()
         assert frame.locator('#exercise').inner_text() == 'Réponse validée'
-        assert frame.locator('img').evaluate('(el)=>el.src.startsWith("blob:")')
+        page.evaluate("window.__mgr.updateCss('.h5p-button{color:rgb(128, 20, 60)}')")
+        assert frame.locator('#exercise').evaluate('(el)=>getComputedStyle(el).color')=='rgb(128, 20, 60)'
+        assert frame.locator('body').evaluate('()=>window.__initCount')==1
+        assert frame.locator('img[alt="image h5p"]').evaluate('(el)=>el.src.startsWith("blob:")')
         assert frame.locator('body').evaluate('()=>window.__blocked') is True
         assert frame.locator('body').evaluate('()=>window.__xhrOk') is True
         assert page.evaluate("() => {try{return document.querySelector('#preview').contentWindow.document===null}catch(e){return e.name==='SecurityError'}}")
@@ -86,7 +107,8 @@ def main():
         browser.close()
     print(json.dumps({'browser':'Chromium','status':'success',
       'checks':['chargement iframe','ressources virtuelles JSON/image','CSS virtuel','interaction bouton',
-                'XHR virtuel','CSP réseau bloqué','origine iframe opaque','réinitialisation','réouverture',
+                'XHR virtuel','stockage éphémère isolé','image de fond blob','image HTML insérée',
+                'CSS sans redémarrage','CSP réseau bloqué','origine iframe opaque','réinitialisation','réouverture',
                 'aucune erreur JavaScript'],
       'limitation':'Lecteur simulé, H5P Standalone réel et contenus tiers encore non testés'},ensure_ascii=False,indent=2))
 

@@ -43,6 +43,7 @@
     let generation=0;
     let current=null;
     let ready=false;
+    let latestCss='';
     function setStatus(message) { status.textContent=message; }
     function onMessage(event) {
       if (!current || event.source !== frame.contentWindow) return;
@@ -53,21 +54,38 @@
         const buffers=current.files.map(f=>f.data);
         try {frame.contentWindow.postMessage({channel:'h5p-preview-init',token:current.token,files:current.files},'*',buffers);} catch(err) {setStatus('Erreur d’initialisation : '+err.message);}
       } else if (data?.channel==='h5p-preview' && data.token===current.token) {
-        if (data.type==='ready') ready=true;
+        if (data.type==='ready') {
+          ready=true;
+          if (latestCss) sendControl({action:'css',css:latestCss});
+        }
+        if (data.type==='height' && Number.isFinite(data.height)) {
+          const pixels=Math.max(580,Math.min(1600,Math.round(data.height)));
+          frame.style.height=pixels+'px';
+        }
         if (data.type==='ready'||data.type==='error') setStatus(data.message);
         if (onEvent) onEvent(data);
       }
     }
     root.addEventListener('message',onMessage);
+    function sendControl(body) {
+      if (!current?.sent) return;
+      frame.contentWindow?.postMessage({channel:'h5p-preview-control',token:current.token,...body},'*');
+    }
+    function updateCss(css) {
+      latestCss=String(css || '');
+      if (ready) sendControl({action:'css',css:latestCss});
+    }
+    function notifyResize() { if (ready) sendControl({action:'resize'}); }
     function reset() {
       generation++;
       ready=false;
       current=null;
       frame.removeAttribute('srcdoc');
       frame.src='about:blank';
+      frame.style.height='';
       setStatus('Aucun aperçu en cours.');
     }
-    async function open({zip,replacements,assetLoader,onProgress}) {
+    async function open({zip,replacements,assetLoader,onProgress,allowYoutube=false}) {
       reset();
       const gen=generation;
       setStatus('Préparation de la visionneuse…');
@@ -76,9 +94,10 @@
         if (gen!==generation) return false;
         const files=await gather(zip,replacements,assets,onProgress);
         if (gen!==generation) return false;
+        latestCss=String(replacements.__css || '');
         current={token:makeToken(),files,sent:false};
         frame.removeAttribute('src');
-        frame.srcdoc=frameModule.documentSource();
+        frame.srcdoc=frameModule.documentSource({allowYoutube});
         setStatus('Démarrage du lecteur H5P…');
         return true;
       } catch(error) {
@@ -86,7 +105,7 @@
         return false;
       }
     }
-    return {open,reset,dispose(){ reset();root.removeEventListener('message',onMessage);},get ready(){return ready;}};
+    return {open,reset,updateCss,notifyResize,dispose(){ reset();root.removeEventListener('message',onMessage);},get ready(){return ready;}};
   }
   function playerLoader({version,paths,fetcher=null,onProgress=()=>{}}) {
     const cache=new Map();

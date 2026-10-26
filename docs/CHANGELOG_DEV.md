@@ -1,3 +1,7 @@
+## 26 octobre 2026, lot 3.1 : corrections après recette GitHub Pages
+
+Voir `docs/LOT3_CORRECTIFS_RECETTE.md`. Stockage temporaire, ressources CSS et médias dynamiques, agrandissement, CSS à chaud, option YouTube sur consentement et diagnostic xAPI. Validation réelle en attente.
+
 # Journal de développement de la refonte
 
 ## Lot 1, 23 octobre 2026, préparation du socle
