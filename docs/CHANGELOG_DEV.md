@@ -54,3 +54,7 @@ Voir `docs/LOT3_CORRECTIFS_RECETTE.md`. Stockage temporaire, ressources CSS et m
 ### Limitations
 - Pas de test d'un véritable moteur H5P dans un navigateur lors de ce lot (CDN inaccessible).
 - Pas de certification de compatibilité des contenus composites ou de sécurité complète face aux scripts hostiles.
+
+## Lot 3.3 (26/10/2026) : correctif expérimental en attente de recette
+
+Ajustement proportionnel de la scène selon la hauteur disponible en plein écran, chargement CSS Blob en plus du pont d'injection, télémétrie CSS/plein écran/CSP et test Chromium spécifique. Lecture YouTube intégrée toujours non résolue ; génération SCORM inchangée.

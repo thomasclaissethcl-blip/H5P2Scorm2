@@ -44,6 +44,7 @@
     let current=null;
     let ready=false;
     let latestCss='';
+    let fitHeight=false;
     function setStatus(message) { status.textContent=message; }
     function onMessage(event) {
       if (!current || event.source !== frame.contentWindow) return;
@@ -57,6 +58,7 @@
         if (data.type==='ready') {
           ready=true;
           if (latestCss) sendControl({action:'css',css:latestCss});
+          if (fitHeight) sendControl({action:'fit',enabled:true});
         }
         if (data.type==='height' && Number.isFinite(data.height)) {
           const pixels=Math.max(580,Math.min(1600,Math.round(data.height)));
@@ -74,6 +76,11 @@
     function updateCss(css) {
       latestCss=String(css || '');
       if (ready) sendControl({action:'css',css:latestCss});
+    }
+    function setFitHeight(enabled) {
+      fitHeight=Boolean(enabled);
+      if (ready) sendControl({action:'fit',enabled:fitHeight});
+      notifyResize();
     }
     function notifyResize() {
       if (!ready) return;
@@ -111,7 +118,7 @@
         return false;
       }
     }
-    return {open,reset,updateCss,notifyResize,dispose(){ reset();root.removeEventListener('message',onMessage);},get ready(){return ready;}};
+    return {open,reset,updateCss,setFitHeight,notifyResize,dispose(){ reset();root.removeEventListener('message',onMessage);},get ready(){return ready;}};
   }
   function playerLoader({version,paths,fetcher=null,onProgress=()=>{}}) {
     const cache=new Map();

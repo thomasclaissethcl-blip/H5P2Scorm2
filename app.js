@@ -144,6 +144,11 @@
       if (event.type === 'xapi-unavailable') {
         el('previewEvents').textContent='Écoute xAPI indisponible avec ce lecteur.';
       }
+      if (['css-applied','css-child-ready','fullscreen-info','fit','resource-blocked'].includes(event.type)) {
+        const node = el('previewEvents');
+        if (node.textContent === 'Aucun événement.') node.textContent='';
+        node.textContent += `[Diagnostic] ${event.message}\n`;
+      }
       if (event.type === 'xapi') {
         const node = el('previewEvents');
         if (node.textContent.startsWith('Aucun événement.') || node.textContent.startsWith('Écoute xAPI active.')) node.textContent = '';
@@ -776,7 +781,7 @@
   function syncFullscreenLabel() {
     previewFullscreen.textContent = document.fullscreenElement === previewViewport
       ? 'Quitter le plein écran' : 'Plein écran';
-    preview.notifyResize();
+    preview.setFitHeight(Boolean(document.fullscreenElement === previewViewport || previewViewport.classList.contains('preview-is-expanded')));
   }
   previewFullscreen.addEventListener('click', async () => {
     try {
@@ -793,7 +798,7 @@
     el('previewExpand').textContent=expanded ? 'Réduire' : 'Agrandir';
     document.body.classList.toggle('preview-expanded',expanded);
     el('previewCollapse').hidden=!expanded;
-    preview.notifyResize();
+    preview.setFitHeight(Boolean(expanded || document.fullscreenElement === viewport));
     requestAnimationFrame(() => requestAnimationFrame(() => preview.notifyResize()));
     setTimeout(() => preview.notifyResize(), 200);
   }

@@ -21,6 +21,10 @@
   const childKey = Array.from(crypto.getRandomValues(new Uint8Array(16)), n => n.toString(16).padStart(2,'0')).join('');
   let resizeObserver = null;
   let lastHeight = 0;
+  let fitToHeight = false;
+  let fitSchedule = false;
+  let fitInProgress = false;
+  let securityWarningCount = 0;
   function signal(type, text) {
     parent.postMessage({channel:'h5p-preview',token,type,message:String(text || '').slice(0,350)}, '*');
   }
@@ -95,9 +99,11 @@
   // Réinjecter le CSS dans chaque document accessible et le maintenir après
   // les styles H5P ajoutés de manière asynchrone.
   function scanStyles() {
+    let visited = 0;
     function inject(doc) {
       const head = doc.head;
       if (!head || !doc.documentElement) return;
+      visited++;
       let style = styledDocuments.get(doc);
       if (!style || !style.isConnected) {
         style = doc.createElement('style');
@@ -126,6 +132,7 @@
       }
     }
     inject(document);
+    return visited;
   }
   function scheduleStyleScan() {
     if (cssScanScheduled) return;
@@ -170,12 +177,49 @@
     activeCss = rewriteCssUrls(String(text || ''));
     const file = entries.get('custom/custom.css');
     if (file) file.data = new TextEncoder().encode(String(text || '')).buffer;
-    scanStyles();
+    const documentCount = scanStyles();
     for (const child of childFrames) sendCssToChild(child);
     scheduleStyleScan();
-    signal('css-applied', 'CSS envoyé aux documents H5P accessibles et connectés.');
+    signal('css-applied', 'CSS : ' + activeCss.length + ' caractères ; ' + documentCount +
+      ' document(s) accessible(s), ' + childFrames.size + ' sous-document(s) connecté(s).');
+  }
+  // En mode agrandi/plein écran, conserver la géométrie calculée par H5P
+  // et réduire uniformément la scène lorsque sa hauteur dépasse le viewport.
+  // Les coordonnées de hotspots sont ainsi transformées avec la carte.
+  function applyHeightFit() {
+    if (fitInProgress) return;
+    const container = document.getElementById('h5p-container');
+    if (!container) return;
+    fitInProgress = true;
+    try {
+      container.style.transform = '';
+      container.style.transformOrigin = '';
+      document.documentElement.classList.toggle('preview-fit-height', fitToHeight);
+      if (!fitToHeight) return;
+      // Le dimensionnement est mesuré après annulation du transform précédent.
+      const width = Math.max(container.scrollWidth, container.getBoundingClientRect().width);
+      const height = Math.max(container.scrollHeight, container.getBoundingClientRect().height);
+      const availableHeight = Math.max(200, window.innerHeight - 18);
+      const availableWidth = Math.max(200, window.innerWidth - 18);
+      if (!(width > 0 && height > 0)) return;
+      const scale = Math.min(1, availableHeight / height, availableWidth / width);
+      container.style.transformOrigin = 'center top';
+      container.style.transform = 'scale(' + Math.max(.1, scale).toFixed(5) + ')';
+      signal('fit', 'Ajustement en hauteur : ' + Math.round(scale * 100) +
+        ' % (contenu ' + Math.round(width) + ' × ' + Math.round(height) +
+        ' ; fenêtre ' + Math.round(availableWidth) + ' × ' + Math.round(availableHeight) + ').');
+    } finally { fitInProgress = false; }
+  }
+  function scheduleHeightFit() {
+    if (!fitToHeight || fitSchedule) return;
+    fitSchedule = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      fitSchedule = false;
+      applyHeightFit();
+    }));
   }
   function reportHeight() {
+    if (fitToHeight) { scheduleHeightFit(); return; }
     const container = document.getElementById('h5p-container');
     // Mesurer le contenu H5P lui-même et non la hauteur de la fenêtre :
     // autrement une activité qui occupe toute l'iframe crée une boucle
@@ -335,7 +379,7 @@
       h5pJsonPath:ROOT+'h5p',contentJsonPath:ROOT+'h5p/content',librariesPath:ROOT+'h5p',
       frameJs:ROOT+'player/frame.bundle.js',frameCss:ROOT+'player/styles/h5p.css',
       frame:false,embedType:'div',postUserStatistics:false,saveFreq:false,fullScreen:true,
-      customCss:[ROOT+'custom/custom.css']
+      customCss:[fileBlob('custom/custom.css')]
     };
     let xapiAttached = false;
     function attachXapi() {
@@ -357,6 +401,9 @@
     attachXapi();
     await new window.H5PStandalone.H5P(document.getElementById('h5p-container'),opts);
     if (!attachXapi() && !xapiAttached) signal('xapi-unavailable','Le lecteur ne fournit pas de dispatcher xAPI accessible.');
+    signal('fullscreen-info', 'Navigateur fullscreenEnabled=' + String(document.fullscreenEnabled) +
+      ' ; H5P.fullscreenSupported=' + String(window.H5P?.fullscreenSupported) +
+      ' ; iframe principale=' + String(window.H5P?.isFramed));
     applyCss(new TextDecoder().decode(entries.get('custom/custom.css')?.data || new ArrayBuffer(0)));
     reportHeight();
     window.addEventListener('resize', reportHeight);
@@ -373,6 +420,13 @@
   window.addEventListener('message', event => {
     if (event.source !== parent || !started || event.data?.channel !== 'h5p-preview-control' || event.data?.token !== token) return;
     if (event.data.action === 'css') applyCss(event.data.css || '');
+    if (event.data.action === 'fit') {
+      fitToHeight = Boolean(event.data.enabled);
+      applyHeightFit();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (fitToHeight) applyHeightFit();
+      }));
+    }
     if (event.data.action === 'resize') {
       // Reporter les notifications après le calcul de layout du navigateur.
       // Certaines bibliothèques recalculent leurs hotspots sur un événement resize.
@@ -384,9 +438,18 @@
           else if (typeof instance?.trigger === 'function') instance.trigger('resize');
         }); } catch (_error) {}
         reportHeight();
+        scheduleHeightFit();
       };
       requestAnimationFrame(() => requestAnimationFrame(notify));
     }
+  });
+  document.addEventListener('securitypolicyviolation', event => {
+    if (securityWarningCount++ >= 12) return;
+    let source = 'non identifié';
+    try { source = new URL(event.blockedURI).hostname || 'document'; }
+    catch (_error) { source = String(event.blockedURI || 'document').split(':')[0]; }
+    signal('resource-blocked', 'CSP : ' + String(event.violatedDirective || 'ressource') +
+      ' bloqué (' + source + ').');
   });
   window.addEventListener('unload', () => {resizeObserver?.disconnect();objectUrls.forEach(url => URL.revokeObjectURL(url));});
   parent.postMessage({channel:'h5p-preview-boot'},'*');
@@ -405,7 +468,7 @@
     return '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
       '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' blob:' + extraScripts + '; style-src \'unsafe-inline\' blob:; img-src blob: data:' + extraImages + '; font-src blob: data:; media-src blob: data:; connect-src ' + connections + '; frame-src ' + iframeHosts + '; object-src \'none\'; form-action \'none\'; base-uri \'none\'">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<style>body{margin:0;padding:12px;font:16px system-ui;background:white;color:#172033}#preview-error{white-space:pre-wrap;color:#992a2a}#preview-error[hidden]{display:none}</style></head>' +
+      '<style>body{margin:0;padding:12px;font:16px system-ui;background:white;color:#172033}html.preview-fit-height,html.preview-fit-height body{height:100%;overflow:hidden}html.preview-fit-height body{padding:0}#preview-error{white-space:pre-wrap;color:#992a2a}#preview-error[hidden]{display:none}</style></head>' +
       '<body><div id="preview-error" role="alert" hidden></div><div id="h5p-container"></div><script>' +
       SCRIPT.replaceAll('</script', '<\\/script') + '</script></body></html>';
   }
