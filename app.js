@@ -162,17 +162,48 @@
     preview.reset();
     el('previewRestart').disabled = true;
     el('previewExpand').disabled = true;
+    el('previewFullscreen').disabled = true;
     el('previewEvents').textContent = 'Aucun événement.';
+    if (el('previewVideoFallback')) el('previewVideoFallback').hidden = true;
+  }
+  function renderVideoFallback(content) {
+    const wrap = el('previewVideoFallback');
+    const links = el('previewVideoLinks');
+    if (!wrap || !links) return;
+    links.replaceChildren();
+    const found = new Set();
+    function walk(node) {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) { node.forEach(walk); return; }
+      if (typeof node.path === 'string' && /video\/youtube/i.test(node.mime || '')) {
+        try {
+          const url = new URL(node.path);
+          if (url.protocol === 'https:' && ['youtube.com','www.youtube.com','youtu.be'].includes(url.hostname)) found.add(url.href);
+        } catch (_error) {}
+      }
+      for (const value of Object.values(node)) if (value && typeof value === 'object') walk(value);
+    }
+    walk(content);
+    for (const [index, url] of [...found].entries()) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.textContent = 'Ouvrir la vidéo ' + (index + 1) + ' sur YouTube';
+      a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      li.appendChild(a); links.appendChild(li);
+    }
+    wrap.hidden = found.size === 0;
   }
   async function launchPreview() {
     if (!state.analysis?.ok || !state.zip) return;
     const sequence = ++previewSequence;
     el('previewRestart').disabled = false;
     el('previewExpand').disabled = false;
+    el('previewFullscreen').disabled = false;
     el('previewEvents').textContent = 'Aucun événement.';
     try {
       const localized = await localizeContent(state.zip, state.analysis);
       if (sequence !== previewSequence) return;
+      renderVideoFallback(localized.content);
       const manifest = cloneJson(state.analysis.h5pJson);
       manifest.language = state.analysis.language.selected;
       const replacements = {
@@ -740,6 +771,22 @@
     cssDebounce = setTimeout(updatePreviewCss, 180);
   });
   el('previewRestart').addEventListener('click', () => { void launchPreview(); });
+  const previewViewport = el('previewViewport');
+  const previewFullscreen = el('previewFullscreen');
+  function syncFullscreenLabel() {
+    previewFullscreen.textContent = document.fullscreenElement === previewViewport
+      ? 'Quitter le plein écran' : 'Plein écran';
+    preview.notifyResize();
+  }
+  previewFullscreen.addEventListener('click', async () => {
+    try {
+      if (document.fullscreenElement === previewViewport) await document.exitFullscreen();
+      else if (previewViewport.requestFullscreen) await previewViewport.requestFullscreen();
+      else throw new Error('API Fullscreen absente.');
+    } catch (error) { el('previewStatus').textContent = 'Plein écran indisponible : ' + error.message; }
+  });
+  document.addEventListener?.('fullscreenchange', syncFullscreenLabel);
+
   function setPreviewExpanded(expanded) {
     const viewport=el('previewViewport');
     viewport.classList.toggle('preview-is-expanded',expanded);
@@ -747,6 +794,8 @@
     document.body.classList.toggle('preview-expanded',expanded);
     el('previewCollapse').hidden=!expanded;
     preview.notifyResize();
+    requestAnimationFrame(() => requestAnimationFrame(() => preview.notifyResize()));
+    setTimeout(() => preview.notifyResize(), 200);
   }
   el('previewCollapse').addEventListener('click', () => setPreviewExpanded(false));
   el('previewExternalVideos').addEventListener('change', () => {void launchPreview();});

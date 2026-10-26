@@ -75,7 +75,13 @@
       latestCss=String(css || '');
       if (ready) sendControl({action:'css',css:latestCss});
     }
-    function notifyResize() { if (ready) sendControl({action:'resize'}); }
+    function notifyResize() {
+      if (!ready) return;
+      sendControl({action:'resize'});
+      // Une seule notification immédiate peut arriver avant le recalcul de
+      // géométrie de Firefox. Envoyer aussi après les deux prochaines peintures.
+      requestAnimationFrame(() => requestAnimationFrame(() => sendControl({action:'resize'})));
+    }
     function reset() {
       generation++;
       ready=false;

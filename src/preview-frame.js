@@ -12,7 +12,13 @@
   const objectUrls = [];
   let token = '';
   let started = false;
-  let customStyle = null;
+  let activeCss = '';
+  const styledDocuments = new WeakMap();
+  const observedDocuments = new WeakSet();
+  const registeredFrames = new WeakSet();
+  let cssScanScheduled = false;
+  const childFrames = new Set();
+  const childKey = Array.from(crypto.getRandomValues(new Uint8Array(16)), n => n.toString(16).padStart(2,'0')).join('');
   let resizeObserver = null;
   let lastHeight = 0;
   function signal(type, text) {
@@ -84,13 +90,90 @@
       return resolved ? 'url("' + resolved + '")' : match;
     });
   }
-  function applyCss(text) {
-    if (!customStyle) {
-      customStyle = document.createElement('style');
-      customStyle.id = 'preview-custom-css-live';
-      document.head.appendChild(customStyle);
+  // Le lecteur peut afficher un H5P dans un document iframe interne.
+  // Les styles du document parent ne traversent pas une frontière iframe.
+  // Réinjecter le CSS dans chaque document accessible et le maintenir après
+  // les styles H5P ajoutés de manière asynchrone.
+  function scanStyles() {
+    function inject(doc) {
+      const head = doc.head;
+      if (!head || !doc.documentElement) return;
+      let style = styledDocuments.get(doc);
+      if (!style || !style.isConnected) {
+        style = doc.createElement('style');
+        style.id = 'preview-custom-css-live';
+        styledDocuments.set(doc, style);
+      }
+      if (style.textContent !== activeCss) style.textContent = activeCss;
+      if (head.lastElementChild !== style) head.appendChild(style);
+      if (!observedDocuments.has(doc)) {
+        observedDocuments.add(doc);
+        const observer = new MutationObserver(records => {
+          if (records.some(record => record.addedNodes.length)) scheduleStyleScan();
+        });
+        observer.observe(doc.documentElement, {childList:true,subtree:true});
+      }
+      for (const iframe of doc.querySelectorAll('iframe')) {
+        if (!registeredFrames.has(iframe)) {
+          registeredFrames.add(iframe);
+          iframe.addEventListener('load', scheduleStyleScan);
+        }
+        try {
+          if (iframe.contentDocument?.documentElement) inject(iframe.contentDocument);
+        } catch (_error) {
+          // Un sous-document tiers (ex. YouTube) reste inaccessible.
+        }
+      }
     }
-    customStyle.textContent = rewriteCssUrls(text);
+    inject(document);
+  }
+  function scheduleStyleScan() {
+    if (cssScanScheduled) return;
+    cssScanScheduled = true;
+    setTimeout(() => { cssScanScheduled = false; scanStyles(); }, 40);
+  }
+  function sendCssToChild(source) {
+    try { source.postMessage({channel:'h5p-preview-child-css',key:childKey,css:activeCss}, '*'); }
+    catch (_err) { childFrames.delete(source); }
+  }
+  // Le Core H5P peut créer une seconde iframe à origine opaque, inaccessible
+  // même depuis le lecteur. Un agent CSS est ajouté à sa propre ressource
+  // frame.bundle.js et reçoit exclusivement du CSS via postMessage.
+  window.addEventListener('message', event => {
+    if (event.data?.channel !== 'h5p-preview-child-ready' || event.data?.key !== childKey) return;
+    if (event.source === parent || !event.source) return;
+    childFrames.add(event.source);
+    sendCssToChild(event.source);
+    signal('css-child-ready', 'Sous-document H5P CSS connecté.');
+  });
+  function installChildCssBridge() {
+    const file = entries.get('player/frame.bundle.js');
+    if (!file) return;
+    const childCode = ';(function(){' +
+      '"use strict";const KEY=' + JSON.stringify(childKey) + ';' +
+      'let css="";let style=null;let scheduled=false;' +
+      'function apply(){if(!document.head)return;' +
+        'if(!style||!style.isConnected){style=document.createElement("style");style.id="preview-child-custom-css";}' +
+        'if(style.textContent!==css)style.textContent=css;' +
+        'if(document.head.lastElementChild!==style)document.head.appendChild(style);}' +
+      'window.addEventListener("message",function(e){if(e.source!==parent||e.data?.channel!=="h5p-preview-child-css"||e.data.key!==KEY)return;' +
+        'css=String(e.data.css||"");apply();});' +
+      'function refresh(){if(scheduled)return;scheduled=true;setTimeout(function(){scheduled=false;apply();},40);}' +
+      'new MutationObserver(function(changes){if(changes.some(x=>x.addedNodes.length))refresh();})' +
+        '.observe(document.documentElement,{childList:true,subtree:true});' +
+      'parent.postMessage({channel:"h5p-preview-child-ready",key:KEY},"*");' +
+    '})();';
+    const text = new TextDecoder().decode(file.data);
+    file.data = new TextEncoder().encode(text + '\n' + childCode).buffer;
+  }
+  function applyCss(text) {
+    activeCss = rewriteCssUrls(String(text || ''));
+    const file = entries.get('custom/custom.css');
+    if (file) file.data = new TextEncoder().encode(String(text || '')).buffer;
+    scanStyles();
+    for (const child of childFrames) sendCssToChild(child);
+    scheduleStyleScan();
+    signal('css-applied', 'CSS envoyé aux documents H5P accessibles et connectés.');
   }
   function reportHeight() {
     const container = document.getElementById('h5p-container');
@@ -235,6 +318,7 @@
       entries.set(item.path, {data:item.data,blobUrl:null});
     }
     installMemoryStorage();
+    installChildCssBridge();
     prepareCss();
     installVirtualAccess();
     const scriptFile = fileBlob('player/main.bundle.js');
@@ -275,6 +359,7 @@
     if (!attachXapi() && !xapiAttached) signal('xapi-unavailable','Le lecteur ne fournit pas de dispatcher xAPI accessible.');
     applyCss(new TextDecoder().decode(entries.get('custom/custom.css')?.data || new ArrayBuffer(0)));
     reportHeight();
+    window.addEventListener('resize', reportHeight);
     resizeObserver = new ResizeObserver(() => reportHeight());
     resizeObserver.observe(document.getElementById('h5p-container'));
     signal('ready','Activité chargée. Vous pouvez interagir avec le contenu.');
@@ -288,7 +373,20 @@
   window.addEventListener('message', event => {
     if (event.source !== parent || !started || event.data?.channel !== 'h5p-preview-control' || event.data?.token !== token) return;
     if (event.data.action === 'css') applyCss(event.data.css || '');
-    if (event.data.action === 'resize') {window.dispatchEvent(new Event('resize'));reportHeight();}
+    if (event.data.action === 'resize') {
+      // Reporter les notifications après le calcul de layout du navigateur.
+      // Certaines bibliothèques recalculent leurs hotspots sur un événement resize.
+      const notify = () => {
+        window.dispatchEvent(new Event('resize'));
+        try { window.H5P?.jQuery?.(window)?.trigger?.('resize'); } catch (_error) {}
+        try { (window.H5P?.instances || []).forEach(instance => {
+          if (typeof instance?.resize === 'function') instance.resize();
+          else if (typeof instance?.trigger === 'function') instance.trigger('resize');
+        }); } catch (_error) {}
+        reportHeight();
+      };
+      requestAnimationFrame(() => requestAnimationFrame(notify));
+    }
   });
   window.addEventListener('unload', () => {resizeObserver?.disconnect();objectUrls.forEach(url => URL.revokeObjectURL(url));});
   parent.postMessage({channel:'h5p-preview-boot'},'*');
