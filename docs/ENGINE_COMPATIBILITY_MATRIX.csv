@@ -1,0 +1,4 @@
+profile_id,standalone_version,core_api_declared_ceiling,availability,qualification,scope,tested_lms,notes
+h5p-standalone-3.8.2-core-1.28,3.8.2,1.28,reference,recette_ciblee_utilisateur,"H5P.GameMap 1.9.8 - Firefox - GitHub Pages",non_valide,"Plafond déclaré du projet; la compatibilité avec toutes les bibliothèques n'est pas prouvée"
+h5p-standalone-3.8.1-candidate,3.8.1,inconnue,non_selectionnable,non_qualifie,aucun,aucun,"Version distribuée; manifeste d'actifs et capacité Core API à déterminer"
+h5p-standalone-3.8.0-candidate,3.8.0,inconnue,non_selectionnable,non_qualifie,aucun,aucun,"Version distribuée; format des ressources à vérifier"

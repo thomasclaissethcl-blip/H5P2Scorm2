@@ -20,3 +20,5 @@ Les identifiants `DEC-nnn` sont permanents. Une décision proposée ou à valide
 Tout nouvel arbitrage doit renseigner : date, responsable, version du CDC affectée, tests à revoir et justification. Les décisions appliquées ci-dessus concernent uniquement l'organisation du code local de ce lot.
 
 | DEC-013 | Technique provisoire | Prototype d’aperçu via iframe `sandbox=allow-scripts`, origine opaque, ressources H5P transmises en mémoire, CSP restrictif | Limite l’accès de H5P à la page hôte et réutilise le lecteur de la V1 ; nécessite une validation avec des H5P réels et un audit spécifique des navigations et ressources dynamiques | VIS-01, VIS-04, NFR-01 |
+
+| DEC-014 | Technique provisoire, lot 4.1 | Conserver 3.8.2 comme seul Player actif, tout en listant 3.8.1 et 3.8.0 comme candidats non qualifiés | La recette Game Map 3.6 est préservée ; une version publiée n'est pas une preuve de compatibilité. Conditions d'activation : assets exacts, versions Core API établies et tests réels. | CMP-03, CMP-04, CMP-05, CMP-09, REC-24 |

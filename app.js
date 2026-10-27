@@ -3,7 +3,7 @@
 
   const APP_VERSION = '1.0.1';
   const modules = globalThis.H5PConverterModules;
-  if (!modules?.compatibility || !modules?.dependencies || !modules?.analysis || !modules?.preview) {
+  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.dependencies || !modules?.analysis || !modules?.preview) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
   const runtimeProfile = modules.compatibility.defaultProfile;
@@ -266,6 +266,7 @@
   const { safeZipPath, languageCandidates, translationPathFor, parseJsonFile } = modules.analysis;
   const { parseLibraryReference } = modules.dependencies;
   const { normalizeCoreApi, compareCoreApi, formatCoreApi } = modules.compatibility;
+  const engineCatalog = modules.engineCatalog;
 
   async function analyzeH5P(zip) {
     return modules.analysis.analyzeH5P(zip, {
@@ -326,6 +327,28 @@
          ${runtimeIssues ? `<ul class="list">${runtimeIssues}</ul>` : ''}`
       : '';
 
+    // Lot 4.1 : diagnostic en mode avancé, sans changement de profil Player actif.
+    // Les bibliothèques sont échappées avant insertion dans le DOM.
+    const compatibilityReport = result.runtimeCompatibility ? engineCatalog.buildReport(result) : null;
+    const catalogueHtml = compatibilityReport ? `<details class="engine-catalog-details">
+      <summary>Versions et moteurs H5P (diagnostic avancé)</summary>
+      <p class="muted">Ce rapport sépare les versions déclarées, les moteurs disponibles et les validations réellement effectuées. Le lecteur utilisé pour l’aperçu et pour SCORM reste la version ${escapeHtml(PLAYER_VERSION)} déjà validée dans ce projet.</p>
+      <div class="language-grid">
+        <div><strong>Lecteur actif</strong><span>${escapeHtml(compatibilityReport.runtime.activeProfileId)}</span></div>
+        <div><strong>API maximale demandée</strong><span>${escapeHtml(formatCoreApi(compatibilityReport.runtime.maximumCoreApiRequired))}</span></div>
+        <div><strong>H5P Editor</strong><span>Non requis pour lire et exporter</span></div>
+        <div><strong>Portée du contrôle</strong><span>Exigences déclarées, pas certification universelle</span></div>
+      </div>
+      <h4>Moteurs répertoriés</h4>
+      <div class="table-scroll"><table class="engine-version-table"><thead><tr><th>Version Player</th><th>API déclarée</th><th>Disponibilité</th></tr></thead>
+      <tbody>${compatibilityReport.catalogue.map(p => `<tr><td>H5P Standalone ${escapeHtml(p.version)}</td><td>${escapeHtml(formatCoreApi(p.declaredCoreApiCeiling))}</td><td>${p.selectable ? 'Référence active' : 'Non qualifié, non sélectionnable'}</td></tr>`).join('')}</tbody></table></div>
+      <h4>Bibliothèques de l’archive (${compatibilityReport.libraries.length})</h4>
+      <div class="table-scroll"><table class="engine-version-table"><thead><tr><th>Bibliothèque</th><th>Version</th><th>Rôle</th><th>Core API déclarée</th></tr></thead>
+      <tbody>${compatibilityReport.libraries.map(lib => `<tr><td><code>${escapeHtml(lib.machineName)}</code></td><td>${escapeHtml(lib.version)}</td><td>${escapeHtml(lib.role === 'principale' ? 'Principale' : lib.role === 'execution' ? 'Exécution' : 'Embarquée, non requise')}</td><td>${escapeHtml(lib.coreApiDeclared || 'Non déclarée')}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted">Les dépendances détaillées, les alertes et la qualification des moteurs figurent dans le rapport JSON. Une absence de déclaration Core API n’apporte aucune preuve de compatibilité.</p>
+      <button type="button" id="downloadEngineReport">Télécharger le diagnostic des versions (JSON)</button>
+    </details>` : '';
+
     const extendedNote = enableResume && profile.experimental
       ? '<p class="callout warning"><strong>Profil expérimental.</strong> Ce mode suppose que Moodle autorise une capacité étendue pour <code>cmi.suspend_data</code>. Il n’a pas été validé dans notre environnement de test. Utiliser le profil strict si vous ne maîtrisez pas la configuration du LMS.</p>'
       : '';
@@ -351,9 +374,25 @@
         <div class="card"><strong>Bibliothèques</strong>${result.libraries?.length ?? 0}</div>
         <div class="card"><strong>Dépendances requises</strong>${result.required?.length ?? 0}</div>
       </div>
-      ${languageHtml}${runtimeHtml}${trackingHtml}${issuesHtml}${warningsHtml}${missingHtml}
+      ${languageHtml}${runtimeHtml}${catalogueHtml}${trackingHtml}${issuesHtml}${warningsHtml}${missingHtml}
     `;
   }
+
+  // Téléchargement local ; aucune donnée H5P n’est transmise à un serveur.
+  diagnostic.addEventListener('click', event => {
+    const button = event.target?.closest?.('#downloadEngineReport');
+    if (!button || !diagnostic.contains(button) || !state.analysis?.runtimeCompatibility) return;
+    const report = engineCatalog.buildReport(state.analysis);
+    const blob = new Blob([JSON.stringify(report, null, 2) + '\n'], {type:'application/json'});
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = 'diagnostic-versions-h5p.json';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 3000);
+  });
 
   async function loadAndAnalyze() {
     if (!state.file) return;

@@ -31,7 +31,7 @@ assert f"id: '{profile['runtimeProfileId']}'" in profiles_js, 'ID du profil diff
 assert 'const runtimeProfile = modules.compatibility.defaultProfile;' in app, 'Profil non partagé avec app.js'
 assert 'modules.analysis.analyzeH5P(zip' in app, 'Analyseur modulaire non utilisé'
 assert 'assessCoreApi' in analysis_js and 'assessCoreApi' in profiles_js, 'Diagnostic Core API non raccordé'
-assert html.index('src/runtime-profiles.js') < html.index('src/h5p-dependencies.js') < html.index('src/h5p-analysis.js') < html.index('src="app.js"'), 'Ordre de chargement invalide'
+assert html.index('src/runtime-profiles.js') < html.index('src/engine-catalog.js') < html.index('src/h5p-dependencies.js') < html.index('src/h5p-analysis.js') < html.index('src="app.js"'), 'Ordre de chargement invalide'
 
 for required in [
     'MAINTENANCE_MANIFEST.md', 'RUNTIME_PROFILE.json', 'COMPATIBILITY.md', 'MOODLE.md',

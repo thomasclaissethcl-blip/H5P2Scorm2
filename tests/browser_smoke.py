@@ -48,7 +48,7 @@ def main():
         html = re.sub(r'<link\s+rel="stylesheet"[^>]*>', '', html)
         page.set_content(html)
         page.add_script_tag(content=INIT)
-        for path in ['src/runtime-profiles.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','app.js']:
+        for path in ['src/runtime-profiles.js','src/engine-catalog.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','src/youtube-preview.js','app.js']:
             page.add_script_tag(content=(ROOT / path).read_text(encoding='utf-8'))
         data = []
         for name, expected_ok in [('poc-valid.h5p', True), ('poc-coreapi-future.h5p', False), ('poc-missing-dependency.h5p', False)]:
