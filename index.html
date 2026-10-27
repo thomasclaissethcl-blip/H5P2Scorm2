@@ -168,7 +168,7 @@
         <p class="muted">Les événements xAPI sont affichés à titre informatif. Aucune note n'est envoyée à un LMS.</p>
         <pre id="previewEvents" class="preview-events">Aucun événement.</pre>
       </details>
-      <p class="muted preview-caveat">Cette version expérimentale télécharge le lecteur 3.8.2 lors du premier aperçu, puis utilise les ressources H5P en mémoire. Par défaut, le cadre bloque les connexions réseau et les sous-frames. Les vidéos YouTube ne sont tentées qu'après consentement explicite. Certains contenus peuvent rester incompatibles avec les restrictions de sécurité du navigateur.</p>
+      <p class="muted preview-caveat">Cette version télécharge par défaut le lecteur validé 3.8.2 lors du premier aperçu. Le mode avancé permet des essais non qualifiés avec d’autres versions, sans export SCORM, puis utilise les ressources H5P en mémoire. Par défaut, le cadre bloque les connexions réseau et les sous-frames. Les vidéos YouTube ne sont tentées qu'après consentement explicite. Certains contenus peuvent rester incompatibles avec les restrictions de sécurité du navigateur.</p>
     </section>
 
     <section class="panel">
@@ -210,6 +210,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="src/runtime-profiles.js"></script>
+  <script src="src/engine-catalog.js"></script>
+  <script src="src/engine-qualification.js"></script>
   <script src="src/h5p-dependencies.js"></script>
   <script src="src/h5p-analysis.js"></script>
   <script src="src/preview-frame.js"></script>
