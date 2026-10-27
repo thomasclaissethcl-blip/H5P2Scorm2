@@ -66,3 +66,11 @@ Ajustement proportionnel de la scène selon la hauteur disponible en plein écra
 - Lecteur YouTube de secours (hors activité H5P) après consentement et clic, extraction sûre des IDs, arrêt à la fermeture.
 - Module `src/youtube-preview.js`, tests unitaires et test Chromium sans requête réseau ; invariants SCORM préservés.
 - Réapparition du bouton natif H5P et lecture YouTube dans l'activité toujours non validées.
+
+## Lot 4.2, 27 octobre 2026 : essais isolés des versions de lecteur
+
+- Lecteur H5P Standalone 3.8.2 conservé comme référence SCORM, sans modification de son runtime.
+- Versions 3.8.1 et 3.8.0 accessibles uniquement en essai manuel de prévisualisation depuis le diagnostic avancé.
+- Aucun moteur candidat n'est sélectionné automatiquement. Export SCORM interdit pendant l'essai d'un candidat, réactivé à la sélection de 3.8.2.
+- Cache des ressources distinct par version. Rapports JSON distinguant la version du lecteur testé et celle du SCORM.
+- Tests de non-régression et essais navigateur avec substitut conservés. Qualification fonctionnelle des moteurs candidats NON obtenue.

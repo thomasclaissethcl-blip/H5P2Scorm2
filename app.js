@@ -6,6 +6,7 @@
   if (!modules?.compatibility || !modules?.engineCatalog || !modules?.dependencies || !modules?.analysis || !modules?.preview) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
+  const engineCatalog = modules.engineCatalog;
   const runtimeProfile = modules.compatibility.defaultProfile;
   const PLAYER_VERSION = runtimeProfile.playerVersion;
   const H5P_CORE_API_SUPPORTED = runtimeProfile.supportedCoreApi;
@@ -119,7 +120,8 @@
     file: null,
     zip: null,
     analysis: null,
-    importedCss: ''
+    importedCss: '',
+    previewProfileId: RUNTIME_PROFILE_ID
   };
 
   const el = id => document.getElementById(id);
@@ -156,10 +158,20 @@
       }
     }
   });
-  const loadPreviewPlayer = modules.preview.playerLoader({
-    version: PLAYER_VERSION, paths:PLAYER_DIST_FILES,
-    onProgress(message) { el('previewStatus').textContent = message; }
-  });
+  // Chaque version possède son propre cache. Le lecteur 3.8.2 reste le chemin de référence.
+  const previewLoaders = new Map();
+  function playerAssetsFor(id) {
+    const profile = engineCatalog.previewProfile(id);
+    if (!profile) throw new Error('Profil H5P inconnu : aperçu refusé.');
+    if (!previewLoaders.has(profile.id)) {
+      previewLoaders.set(profile.id, modules.preview.playerLoader({
+        version: profile.playerVersion, paths: PLAYER_DIST_FILES,
+        onProgress(message) { el('previewStatus').textContent = message; }
+      }));
+    }
+    return previewLoaders.get(profile.id);
+  }
+  const loadPreviewPlayer = playerAssetsFor(RUNTIME_PROFILE_ID);
   let previewSequence = 0;
   let cssDebounce = null;
   function clearPreview() {
@@ -202,7 +214,12 @@
         'content/content.json':JSON.stringify(localized.content),
         __css:[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n')
       };
-      await preview.open({zip:state.zip,replacements,assetLoader:loadPreviewPlayer,
+      const previewProfile = engineCatalog.previewProfile(state.previewProfileId);
+      if (!previewProfile) throw new Error('Moteur de prévisualisation inconnu.');
+      // Une version non qualifiée ne doit jamais modifier le runtime SCORM.
+      const assetLoader = previewProfile.id === RUNTIME_PROFILE_ID
+        ? loadPreviewPlayer : playerAssetsFor(previewProfile.id);
+      await preview.open({zip:state.zip,replacements,assetLoader,
         allowYoutube:Boolean(el('previewExternalVideos')?.checked),
         onProgress(message) { if (sequence === previewSequence) el('previewStatus').textContent = message; }});
     } catch (error) {
@@ -266,7 +283,6 @@
   const { safeZipPath, languageCandidates, translationPathFor, parseJsonFile } = modules.analysis;
   const { parseLibraryReference } = modules.dependencies;
   const { normalizeCoreApi, compareCoreApi, formatCoreApi } = modules.compatibility;
-  const engineCatalog = modules.engineCatalog;
 
   async function analyzeH5P(zip) {
     return modules.analysis.analyzeH5P(zip, {
@@ -329,10 +345,15 @@
 
     // Lot 4.1 : diagnostic en mode avancé, sans changement de profil Player actif.
     // Les bibliothèques sont échappées avant insertion dans le DOM.
-    const compatibilityReport = result.runtimeCompatibility ? engineCatalog.buildReport(result) : null;
+    const compatibilityReport = result.runtimeCompatibility ? engineCatalog.buildReport(result, {previewProfileId:state.previewProfileId}) : null;
     const catalogueHtml = compatibilityReport ? `<details class="engine-catalog-details">
       <summary>Versions et moteurs H5P (diagnostic avancé)</summary>
-      <p class="muted">Ce rapport sépare les versions déclarées, les moteurs disponibles et les validations réellement effectuées. Le lecteur utilisé pour l’aperçu et pour SCORM reste la version ${escapeHtml(PLAYER_VERSION)} déjà validée dans ce projet.</p>
+      <p class="muted">Le lecteur SCORM validé reste ${escapeHtml(PLAYER_VERSION)}. Les candidats ne sont disponibles que pour des essais volontaires dans la visionneuse, sans prétention de compatibilité ni possibilité d’export tant qu’ils sont sélectionnés.</p>
+      <label for="previewEngineProfile"><strong>Moteur de la visionneuse (mode avancé)</strong></label>
+      <select id="previewEngineProfile" aria-describedby="previewEngineNotice" ${!result.ok ? 'disabled' : ''}>
+        ${engineCatalog.profiles.map(p => `<option value="${escapeHtml(p.id)}" ${p.id===state.previewProfileId?'selected':''}>H5P Standalone ${escapeHtml(p.playerVersion)} ${p.status === 'reference' ? '(validé)' : '(essai non qualifié)'}</option>`).join('')}
+      </select>
+      <p id="previewEngineNotice" class="muted" role="status">${engineCatalog.canExportWithPreview(state.previewProfileId) ? 'Lecteur de référence : export SCORM autorisé si le H5P est valide.' : 'Essai expérimental : aucune garantie de fonctionnement, export SCORM désactivé. Revenir au moteur 3.8.2 pour exporter.'}</p>
       <div class="language-grid">
         <div><strong>Lecteur actif</strong><span>${escapeHtml(compatibilityReport.runtime.activeProfileId)}</span></div>
         <div><strong>API maximale demandée</strong><span>${escapeHtml(formatCoreApi(compatibilityReport.runtime.maximumCoreApiRequired))}</span></div>
@@ -341,7 +362,7 @@
       </div>
       <h4>Moteurs répertoriés</h4>
       <div class="table-scroll"><table class="engine-version-table"><thead><tr><th>Version Player</th><th>API déclarée</th><th>Disponibilité</th></tr></thead>
-      <tbody>${compatibilityReport.catalogue.map(p => `<tr><td>H5P Standalone ${escapeHtml(p.version)}</td><td>${escapeHtml(formatCoreApi(p.declaredCoreApiCeiling))}</td><td>${p.selectable ? 'Référence active' : 'Non qualifié, non sélectionnable'}</td></tr>`).join('')}</tbody></table></div>
+      <tbody>${compatibilityReport.catalogue.map(p => `<tr><td>H5P Standalone ${escapeHtml(p.version)}</td><td>${escapeHtml(formatCoreApi(p.declaredCoreApiCeiling))}</td><td>${p.selectable ? 'Référence validée' : 'Essai manuel uniquement, export interdit'}</td></tr>`).join('')}</tbody></table></div>
       <h4>Bibliothèques de l’archive (${compatibilityReport.libraries.length})</h4>
       <div class="table-scroll"><table class="engine-version-table"><thead><tr><th>Bibliothèque</th><th>Version</th><th>Rôle</th><th>Core API déclarée</th></tr></thead>
       <tbody>${compatibilityReport.libraries.map(lib => `<tr><td><code>${escapeHtml(lib.machineName)}</code></td><td>${escapeHtml(lib.version)}</td><td>${escapeHtml(lib.role === 'principale' ? 'Principale' : lib.role === 'execution' ? 'Exécution' : 'Embarquée, non requise')}</td><td>${escapeHtml(lib.coreApiDeclared || 'Non déclarée')}</td></tr>`).join('')}</tbody></table></div>
@@ -378,11 +399,27 @@
     `;
   }
 
+  // Le choix du moteur est explicitement expérimental et isolé du générateur SCORM.
+  diagnostic.addEventListener('change', event => {
+    if (event.target?.id !== 'previewEngineProfile') return;
+    const profile = engineCatalog.previewProfile(event.target.value);
+    if (!profile || !state.analysis?.ok) return;
+    state.previewProfileId = profile.id;
+    generateBtn.disabled = !engineCatalog.canExportWithPreview(profile.id);
+    const notice = diagnostic.querySelector('#previewEngineNotice');
+    if (notice) notice.textContent = engineCatalog.canExportWithPreview(profile.id)
+      ? 'Lecteur de référence : export SCORM autorisé si le H5P est valide.'
+      : 'Essai expérimental : aucune garantie de fonctionnement, export SCORM désactivé. Revenir au moteur 3.8.2 pour exporter.';
+    logLine('Visionneuse : H5P Standalone '+profile.playerVersion+' ('+(profile.previewTrial ? 'essai non qualifié' : 'référence validée')+').');
+    clearPreview();
+    void launchPreview();
+  });
+
   // Téléchargement local ; aucune donnée H5P n’est transmise à un serveur.
   diagnostic.addEventListener('click', event => {
     const button = event.target?.closest?.('#downloadEngineReport');
     if (!button || !diagnostic.contains(button) || !state.analysis?.runtimeCompatibility) return;
-    const report = engineCatalog.buildReport(state.analysis);
+    const report = engineCatalog.buildReport(state.analysis, {previewProfileId:state.previewProfileId});
     const blob = new Blob([JSON.stringify(report, null, 2) + '\n'], {type:'application/json'});
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -406,7 +443,7 @@
       state.zip = await JSZip.loadAsync(buffer, { createFolders: true });
       state.analysis = await analyzeH5P(state.zip);
       renderDiagnostic(state.analysis);
-      generateBtn.disabled = !state.analysis.ok;
+      generateBtn.disabled = !state.analysis.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
       if (state.analysis.ok) {
         void launchPreview();
         logLine(`Analyse terminée : package exploitable. Langue retenue : ${state.analysis.language.selected}.`);
@@ -610,6 +647,10 @@
 
   async function generateScorm() {
     if (!state.analysis?.ok || !state.zip) return;
+    if (!engineCatalog.canExportWithPreview(state.previewProfileId)) {
+      logLine('Export interdit : moteur expérimental sélectionné. Revenir au lecteur validé 3.8.2.');
+      return;
+    }
     generateBtn.disabled = true;
     clearLog();
     resetGenerationProgress();
@@ -723,7 +764,7 @@
       generationProgressPhase.textContent = 'Échec';
       logLine(`Échec de génération : ${error.message}`);
     } finally {
-      generateBtn.disabled = !state.analysis?.ok;
+      generateBtn.disabled = !state.analysis?.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
     }
   }
 
@@ -732,6 +773,7 @@
     state.file = file || null;
     state.zip = null;
     state.analysis = null;
+    state.previewProfileId = RUNTIME_PROFILE_ID;
     generateBtn.disabled = true;
     analyzeBtn.disabled = !state.file;
     resetGenerationProgress();

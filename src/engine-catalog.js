@@ -12,26 +12,36 @@
       id: reference.id,
       player: 'H5P Standalone', playerVersion: reference.playerVersion,
       coreApiCeiling: Object.freeze({ ...reference.supportedCoreApi }),
-      status: 'reference', selectable: true,
+      status: 'reference', selectable: true, previewTrial: false,
       evidence: 'Recette utilisateur ciblée : H5P.GameMap 1.9.8, Firefox, GitHub Pages (lot 3.6).',
       note: 'Le plafond Core API est déclaré, pas vérifié sur toutes les bibliothèques.'
     }),
     Object.freeze({
       id: 'h5p-standalone-3.8.1-candidate',
       player: 'H5P Standalone', playerVersion: '3.8.1',
-      coreApiCeiling: null, status: 'candidate', selectable: false,
+      coreApiCeiling: null, status: 'candidate', selectable: false, previewTrial: true,
       evidence: 'Version publiée, mais non qualifiée avec ce convertisseur.',
       note: 'Manifeste des ressources, compatibilité Core API et tests fonctionnels à établir.'
     }),
     Object.freeze({
       id: 'h5p-standalone-3.8.0-candidate',
       player: 'H5P Standalone', playerVersion: '3.8.0',
-      coreApiCeiling: null, status: 'candidate', selectable: false,
+      coreApiCeiling: null, status: 'candidate', selectable: false, previewTrial: true,
       evidence: 'Version publiée, mais non qualifiée avec ce convertisseur.',
       note: 'La composition des ressources peut différer de la 3.8.2.'
     })
   ]);
 
+  // Les moteurs candidats peuvent être essayés manuellement UNIQUEMENT en aperçu.
+  // Leur plafond Core API et leur fonctionnement ne sont pas qualifiés.
+  function previewProfile(id) {
+    return profiles.find(p => p.id === id && (p.status === 'reference' ||
+      (p.status === 'candidate' && p.previewTrial === true))) || null;
+  }
+  function canExportWithPreview(id) {
+    const p = previewProfile(id);
+    return Boolean(p && p.status === 'reference' && p.id === reference.id && p.selectable);
+  }
   function availableProfiles(requiredCoreApi, pool = profiles) {
     const normalized = compatibility.normalizeCoreApi(requiredCoreApi);
     if (normalized?.invalid) return [];
@@ -56,7 +66,7 @@
       return Number.isInteger(n) && n >= 0 ? String(n) : (i === 2 ? '?' : 'inconnue');
     }).join('.');
   }
-  function buildReport(analysis) {
+  function buildReport(analysis, {previewProfileId = reference.id} = {}) {
     if (!analysis || typeof analysis !== 'object') throw new TypeError('Analyse H5P requise.');
     const required = new Set(analysis.required || []);
     const libraries = (analysis.libraries || []).map(record => {
@@ -85,6 +95,9 @@
     const warnings = [...(analysis.warnings || [])];
     if (!requiredCore) warnings.push('Core API maximale non déterminée : absence de déclaration pour les bibliothèques pertinentes.');
     if (selected && selected.id !== runtime.id) warnings.push('Sélection et runtime actif différents : aucun moteur de substitution n’est lancé.');
+    const preview = previewProfile(previewProfileId);
+    if (!preview) warnings.push('Profil de prévisualisation inconnu : le lecteur de référence doit être utilisé.');
+    else if (!canExportWithPreview(preview.id)) warnings.push('Prévisualisation expérimentale sur un moteur non qualifié. Export SCORM désactivé tant que ce moteur est sélectionné.');
     return {
       schemaVersion: 1,
       activity: {
@@ -104,10 +117,17 @@
         diagnostic: analysis.ok ? 'analyse_statique_admissible' : 'analyse_statique_bloquee'
       },
       eligibleProfileIds: availableProfiles(requiredCore).map(p => p.id),
+      preview: {
+        requestedProfileId: preview ? preview.id : reference.id,
+        playerVersion: preview ? preview.playerVersion : reference.playerVersion,
+        mode: preview && preview.previewTrial ? 'essai_manuel_non_qualifie' : 'reference_validee',
+        exportAllowedWithPreview: Boolean(preview && canExportWithPreview(preview.id)),
+        scope: 'Le moteur choisi dans la visionneuse ne remplace jamais silencieusement le moteur du SCORM.'
+      },
       catalogue: profiles.map(p => ({
         id: p.id, player: p.player, version: p.playerVersion,
         declaredCoreApiCeiling: p.coreApiCeiling ? { ...p.coreApiCeiling } : null,
-        status: p.status, selectable: p.selectable, evidence: p.evidence, note: p.note
+        status: p.status, selectable: p.selectable, previewTrial: Boolean(p.previewTrial), evidence: p.evidence, note: p.note
       })),
       libraries,
       missing: (analysis.missing || []).map(dep => ({key: textOrNull(dep.key), kind: textOrNull(dep.kind)})),
@@ -128,13 +148,14 @@
       if (!p || typeof p.id !== 'string' || ids.has(p.id)) return false;
       ids.add(p.id);
       if (!/^\d+\.\d+\.\d+$/.test(p.playerVersion)) return false;
-      if (p.selectable && (!p.coreApiCeiling || p.status !== 'reference')) return false;
+      if (p.selectable && (!p.coreApiCeiling || p.status !== 'reference' || p.previewTrial)) return false;
+      if (p.previewTrial && (p.status !== 'candidate' || p.selectable || p.coreApiCeiling !== null)) return false;
       if (p.coreApiCeiling && compatibility.normalizeCoreApi(p.coreApiCeiling)?.invalid) return false;
     }
     return pool.some(p => p.id === reference.id && p.selectable && p.playerVersion === reference.playerVersion);
   }
   if (!validateCatalogue()) throw new Error('Catalogue de moteurs H5P incohérent.');
-  const api = Object.freeze({profiles, availableProfiles, selectProfile, buildReport, validateCatalogue});
+  const api = Object.freeze({profiles, availableProfiles, selectProfile, previewProfile, canExportWithPreview, buildReport, validateCatalogue});
   const modules = root.H5PConverterModules || (root.H5PConverterModules = {});
   modules.engineCatalog = api;
   if (typeof module === 'object' && module.exports) module.exports = api;

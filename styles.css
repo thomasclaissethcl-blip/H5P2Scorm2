@@ -143,3 +143,7 @@ body.preview-expanded {overflow:hidden;}
 .engine-version-table th { position: sticky; top: 0; background: #f4f7fa; color: #15263b; }
 .engine-version-table code { overflow-wrap: anywhere; }
 .engine-catalog-details button { margin-top: .8rem; }
+
+/* Lot 4.2 : choix explicite de moteur dans le panneau avancé. */
+.engine-catalog-details select { display: block; max-width: 100%; width: min(100%, 33rem); margin: .5rem 0; padding: .48rem .6rem; }
+.engine-catalog-details label { display: block; margin-top: .9rem; }

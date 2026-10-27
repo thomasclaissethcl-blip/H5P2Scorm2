@@ -56,7 +56,7 @@ with sync_playwright() as pw:
     text = page.locator('.engine-catalog-details').inner_text()
     assert 'H5P.GameMap' in text and '1.9.8' in text, text[:1000]
     assert '3.8.2' in text and '3.8.1' in text and '3.8.0' in text
-    assert 'Non qualifié, non sélectionnable' in text
+    assert 'Essai manuel uniquement, export interdit' in text
     assert page.locator('#generateBtn').is_enabled(), 'Le Game Map validé ne doit pas être bloqué'
     with page.expect_download() as event:
         page.locator('#downloadEngineReport').click()

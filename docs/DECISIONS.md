@@ -22,3 +22,10 @@ Tout nouvel arbitrage doit renseigner : date, responsable, version du CDC affect
 | DEC-013 | Technique provisoire | Prototype d’aperçu via iframe `sandbox=allow-scripts`, origine opaque, ressources H5P transmises en mémoire, CSP restrictif | Limite l’accès de H5P à la page hôte et réutilise le lecteur de la V1 ; nécessite une validation avec des H5P réels et un audit spécifique des navigations et ressources dynamiques | VIS-01, VIS-04, NFR-01 |
 
 | DEC-014 | Technique provisoire, lot 4.1 | Conserver 3.8.2 comme seul Player actif, tout en listant 3.8.1 et 3.8.0 comme candidats non qualifiés | La recette Game Map 3.6 est préservée ; une version publiée n'est pas une preuve de compatibilité. Conditions d'activation : assets exacts, versions Core API établies et tests réels. | CMP-03, CMP-04, CMP-05, CMP-09, REC-24 |
+
+### DEC-L4.2-01 : expérimentation des lecteurs non qualifiés sans mise en danger du SCORM
+- Date : 2026-10-27.
+- Exigences : CMP-04, CMP-05, CMP-06, CMP-08, CMP-09, REC-24.
+- Décision : présenter H5P Standalone 3.8.1 et 3.8.0 en mode avancé comme essais manuels de visionneuse uniquement. Le profil 3.8.2 reste l'unique sélection automatique et l'unique profil exportable. Bloquer l'export lorsque le lecteur d'essai est sélectionné ; retour explicite au profil 3.8.2 pour exporter.
+- Justification : l'environnement de développement ne donne pas accès aux ressources CDN officielles pour certifier ces versions, et aucun test Firefox réel des candidats n'est encore disponible.
+- Conséquences : fonctionnalité préparatoire de multi-moteur ; la qualification, la sélection automatique entre profils compatibles et les exports SCORM avec un autre moteur demeurent ouverts.
