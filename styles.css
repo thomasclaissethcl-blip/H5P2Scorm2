@@ -147,3 +147,11 @@ body.preview-expanded {overflow:hidden;}
 /* Lot 4.2 : choix explicite de moteur dans le panneau avancé. */
 .engine-catalog-details select { display: block; max-width: 100%; width: min(100%, 33rem); margin: .5rem 0; padding: .48rem .6rem; }
 .engine-catalog-details label { display: block; margin-top: .9rem; }
+
+/* Lot 4.3 : fiche de qualification isolée dans le mode avancé. */
+.qualification-panel { margin:18px 0; padding:14px; background:#fff; border:1px solid #dbe2eb; border-radius:10px; }
+.qualification-panel h4 { margin:0 0 8px; }
+.qualification-checks { display:grid; grid-template-columns:minmax(0,1fr) minmax(145px,210px); align-items:center; gap:8px 16px; }
+.qualification-checks label { margin:0; font-weight:600; }
+.qualification-panel textarea { min-height:85px; }
+@media (max-width:600px) { .qualification-checks {grid-template-columns:1fr;} }

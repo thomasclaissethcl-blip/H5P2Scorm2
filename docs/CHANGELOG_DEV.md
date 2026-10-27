@@ -74,3 +74,10 @@ Ajustement proportionnel de la scène selon la hauteur disponible en plein écra
 - Aucun moteur candidat n'est sélectionné automatiquement. Export SCORM interdit pendant l'essai d'un candidat, réactivé à la sélection de 3.8.2.
 - Cache des ressources distinct par version. Rapports JSON distinguant la version du lecteur testé et celle du SCORM.
 - Tests de non-régression et essais navigateur avec substitut conservés. Qualification fonctionnelle des moteurs candidats NON obtenue.
+
+## Lot 4.3, 27 octobre 2026 : dossier de qualification manuelle des moteurs
+
+- Ajout de `src/engine-qualification.js` et d'une fiche de qualification réservée au diagnostic avancé.
+- Sept critères manuels et compteurs d'observations locales, rapports JSON individuels par moteur et par fichier.
+- Aucune activation automatique des lecteurs 3.8.0/3.8.1 ni modification de la génération SCORM.
+- Tests unitaires et essai Chromium du processus de qualification ajoutés ; qualification sur les vrais lecteurs en attente.

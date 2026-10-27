@@ -3,10 +3,11 @@
 
   const APP_VERSION = '1.0.1';
   const modules = globalThis.H5PConverterModules;
-  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.dependencies || !modules?.analysis || !modules?.preview) {
+  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.dependencies || !modules?.analysis || !modules?.preview) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
   const engineCatalog = modules.engineCatalog;
+  const engineQualification = modules.engineQualification;
   const runtimeProfile = modules.compatibility.defaultProfile;
   const PLAYER_VERSION = runtimeProfile.playerVersion;
   const H5P_CORE_API_SUPPORTED = runtimeProfile.supportedCoreApi;
@@ -121,7 +122,8 @@
     zip: null,
     analysis: null,
     importedCss: '',
-    previewProfileId: RUNTIME_PROFILE_ID
+    previewProfileId: RUNTIME_PROFILE_ID,
+    qualificationSessions: new Map()
   };
 
   const el = id => document.getElementById(id);
@@ -136,10 +138,30 @@
   const generationProgressPhase = el('generationProgressPhase');
   const generationProgressPercent = el('generationProgressPercent');
 
+  function qualificationSession() {
+    if (!state.analysis?.ok || !state.file) return null;
+    let session=state.qualificationSessions.get(state.previewProfileId);
+    if (!session) {
+      const profile=engineCatalog.previewProfile(state.previewProfileId);
+      if (!profile) return null;
+      session=engineQualification.newSession({profile,analysis:state.analysis,file:state.file,browser:navigator.userAgent});
+      state.qualificationSessions.set(state.previewProfileId,session);
+    }
+    return session;
+  }
+  function updateQualificationObservation() {
+    const node=diagnostic.querySelector('#qualificationObservations');
+    if (!node) return;
+    const data=qualificationSession()?.report().observations;
+    if (data) node.textContent=`Lecteur chargé : ${data.ready>0?'oui':'non'} ; événements xAPI : ${data.xapi} ; erreurs : ${data.error} ; ressources bloquées : ${data['resource-blocked']}.`;
+  }
+
   // La visionneuse partage le profil et la localisation de l'export, pas son pont LMS.
   const preview = modules.preview.createPreview({
     frame: el('previewFrame'), status: el('previewStatus'),
     onEvent(event) {
+      qualificationSession()?.record(event);
+      updateQualificationObservation();
       if (event.type === 'xapi-ready') {
         el('previewEvents').textContent='Écoute xAPI active. Réalisez un exercice pour observer les événements.';
       }
@@ -219,11 +241,19 @@
       // Une version non qualifiée ne doit jamais modifier le runtime SCORM.
       const assetLoader = previewProfile.id === RUNTIME_PROFILE_ID
         ? loadPreviewPlayer : playerAssetsFor(previewProfile.id);
-      await preview.open({zip:state.zip,replacements,assetLoader,
+      const opened=await preview.open({zip:state.zip,replacements,assetLoader,
         allowYoutube:Boolean(el('previewExternalVideos')?.checked),
         onProgress(message) { if (sequence === previewSequence) el('previewStatus').textContent = message; }});
+      if (!opened && sequence === previewSequence) {
+        qualificationSession()?.record({type:'error', message:el('previewStatus').textContent});
+        updateQualificationObservation();
+      }
     } catch (error) {
-      if (sequence === previewSequence) el('previewStatus').textContent = 'Aperçu indisponible : '+error.message;
+      if (sequence === previewSequence) {
+        el('previewStatus').textContent = 'Aperçu indisponible : '+error.message;
+        qualificationSession()?.record({type:'error',message:error.message});
+        updateQualificationObservation();
+      }
     }
   }
 
@@ -367,6 +397,18 @@
       <div class="table-scroll"><table class="engine-version-table"><thead><tr><th>Bibliothèque</th><th>Version</th><th>Rôle</th><th>Core API déclarée</th></tr></thead>
       <tbody>${compatibilityReport.libraries.map(lib => `<tr><td><code>${escapeHtml(lib.machineName)}</code></td><td>${escapeHtml(lib.version)}</td><td>${escapeHtml(lib.role === 'principale' ? 'Principale' : lib.role === 'execution' ? 'Exécution' : 'Embarquée, non requise')}</td><td>${escapeHtml(lib.coreApiDeclared || 'Non déclarée')}</td></tr>`).join('')}</tbody></table></div>
       <p class="muted">Les dépendances détaillées, les alertes et la qualification des moteurs figurent dans le rapport JSON. Une absence de déclaration Core API n’apporte aucune preuve de compatibilité.</p>
+      <div class="qualification-panel" aria-label="Fiche de qualification du moteur">
+        <h4>Fiche de qualification de la visionneuse</h4>
+        <p class="muted">Renseignez ces contrôles après avoir essayé le moteur sélectionné. Le rapport reste local et ne qualifie jamais automatiquement un lecteur. Une nouvelle archive efface les fiches de la session.</p>
+        <p id="qualificationObservations" class="muted" role="status">Aucune observation de lecture pour ce moteur.</p>
+        <div class="qualification-checks">
+          ${engineQualification.criteria.map(c=>`<label for="qual-${escapeHtml(c.id)}">${escapeHtml(c.label)}</label><select id="qual-${escapeHtml(c.id)}" data-qualification-criterion="${escapeHtml(c.id)}">${[['non_teste','Non testé'],['reussi','Réussi'],['echoue','Échoué'],['sans_objet','Sans objet']].map(([v,lab])=>`<option value="${v}">${lab}</option>`).join('')}</select>`).join('')}
+        </div>
+        <label for="qualificationNotes">Notes de l’essai (facultatif)</label>
+        <textarea id="qualificationNotes" rows="3" maxlength="2000" placeholder="Anomalies visuelles, étapes pour reproduire…"></textarea>
+        <button type="button" id="downloadQualificationReport">Télécharger la fiche de qualification (JSON)</button>
+        <p class="muted">Le moteur 3.8.2 reste le seul autorisé pour l’export SCORM, même si les essais candidats réussissent.</p>
+      </div>
       <button type="button" id="downloadEngineReport">Télécharger le diagnostic des versions (JSON)</button>
     </details>` : '';
 
@@ -397,7 +439,31 @@
       </div>
       ${languageHtml}${runtimeHtml}${catalogueHtml}${trackingHtml}${issuesHtml}${warningsHtml}${missingHtml}
     `;
+    restoreQualificationControls();
   }
+
+  function restoreQualificationControls() {
+    const session=qualificationSession();
+    if (!session) return;
+    const report=session.report();
+    for (const check of report.criteria) {
+      const input=diagnostic.querySelector(`[data-qualification-criterion="${check.id}"]`);
+      if (input) input.value=check.status;
+    }
+    const notes=diagnostic.querySelector('#qualificationNotes');
+    if (notes) notes.value=report.notes;
+    updateQualificationObservation();
+  }
+
+  // Évaluation manuelle des moteurs, sans influence sur la construction SCORM.
+  diagnostic.addEventListener('change', event => {
+    const id=event.target?.dataset?.qualificationCriterion;
+    if (!id) return;
+    qualificationSession()?.mark(id,event.target.value);
+  });
+  diagnostic.addEventListener('input', event => {
+    if (event.target?.id==='qualificationNotes') qualificationSession()?.setNote(event.target.value);
+  });
 
   // Le choix du moteur est explicitement expérimental et isolé du générateur SCORM.
   diagnostic.addEventListener('change', event => {
@@ -412,6 +478,7 @@
       : 'Essai expérimental : aucune garantie de fonctionnement, export SCORM désactivé. Revenir au moteur 3.8.2 pour exporter.';
     logLine('Visionneuse : H5P Standalone '+profile.playerVersion+' ('+(profile.previewTrial ? 'essai non qualifié' : 'référence validée')+').');
     clearPreview();
+    restoreQualificationControls();
     void launchPreview();
   });
 
@@ -429,6 +496,23 @@
     anchor.click();
     anchor.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 3000);
+  });
+
+  diagnostic.addEventListener('click', event => {
+    const button=event.target?.closest?.('#downloadQualificationReport');
+    if (!button || !diagnostic.contains(button)) return;
+    const session=qualificationSession();
+    if (!session) return;
+    const report=session.report();
+    const blob=new Blob([JSON.stringify(report,null,2)+'\n'],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download='essai-moteur-h5p-'+report.engine.version+'.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
   });
 
   async function loadAndAnalyze() {
@@ -774,6 +858,7 @@
     state.zip = null;
     state.analysis = null;
     state.previewProfileId = RUNTIME_PROFILE_ID;
+    state.qualificationSessions.clear();
     generateBtn.disabled = true;
     analyzeBtn.disabled = !state.file;
     resetGenerationProgress();
