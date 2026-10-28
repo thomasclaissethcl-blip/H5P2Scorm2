@@ -1,0 +1,95 @@
+{
+  "fixtureKind": "plan-derived-synthetic-events",
+  "description": "Sept unites de notation tirees de la structure SST406 fournie ; scores et evenements xAPI synthetiques pour tester l'absence de note globale.",
+  "mainLibrary": "H5P.InteractiveBook",
+  "expectedSubContentIds": [
+    "38e994af-c098-45b6-8b6f-533121b7819b",
+    "48dd06a6-ff0b-4dd7-b34d-2c36c7b7c45b",
+    "4c0108f1-c84d-47ba-9c17-84cd6cf9927d",
+    "89ff9845-a860-4610-911b-f536a40a346c",
+    "dcba8ff3-0f1b-4e52-b672-ddf700eaca2f",
+    "f0b68244-7a20-4dc2-958c-cc9fedd3abc2",
+    "f87d7be7-07c5-4b60-8433-301c4c88161c"
+  ],
+  "ignoredNestedSubContentIds": [
+    "02d03de8-18bb-4d20-b5e0-f487d744cd7c",
+    "17bc514b-5c97-42d3-ad32-b0e7bfa0293c",
+    "18753e35-4430-4b74-b443-e9ab9f65292f",
+    "239b3b0e-3f00-4fc1-8bee-7d9ee8253a49",
+    "28ee1193-51cb-45cf-a2d6-f4bf296d0113",
+    "2bd92d79-406c-448a-bdc8-eedc2bd34d4d",
+    "2ee73e12-385e-44c6-85e7-0331020a91fe",
+    "32d14b47-94cb-4fd7-8dca-27a8b23f66c5",
+    "32ef56a6-1acf-4926-b6e5-8e941dd53f63",
+    "36f56185-fa0e-4492-8f37-2f8f122a58bd",
+    "374fbc96-694b-468d-b217-8d4341e4c647",
+    "3b771936-2ff8-4ca4-9d3c-e14c2cd6267a",
+    "401e1682-6a4b-42d6-8eb1-93cb4ff701d2",
+    "4fb2e08d-1109-4f85-879c-dce2dc2a11a6",
+    "5a43329c-09e5-4858-9c77-c292fb115516",
+    "69431eef-dbc1-44ec-a5de-4aa17b9c6275",
+    "6ae142ba-35a1-45f4-ad81-64cbeee2a718",
+    "747a4176-0aad-4e53-94a9-3b18a37c14c0",
+    "88954c40-000a-47b7-bc69-76379205b49e",
+    "88c34f7f-07b5-480e-bae3-a0cf808878d2",
+    "8a125860-e3bb-4e32-a529-7e210d8e7c68",
+    "8c3b8bb8-d3c2-4ab8-8052-42457a6fe3ee",
+    "8c617264-9430-475f-9f83-8e51f9f499d5",
+    "bae57427-5960-423d-ae13-58e2b9dcb309",
+    "c739c06b-4e0d-4093-8f7f-5d8a9eee4d32",
+    "c7700e83-86d7-4551-b341-1385d998dc71",
+    "cb992953-57cd-45fd-9327-cc1521ec739a",
+    "cdcecdb2-e13b-4661-91f0-6f3b0605a5af",
+    "d5c22a58-1da7-4a1a-b7f3-f3a2b1709b33",
+    "db8587c1-92b5-44c9-a573-db5b51ee7902",
+    "dc9e7532-2f7e-4701-bedf-dfbc7233493b",
+    "e3d23d09-fc53-41da-be56-2f6b2f90154b",
+    "e9973232-02aa-4074-90b9-53e09c6fb6a1",
+    "ed3b5c16-08c0-4750-b952-ceae3806ae4b",
+    "fa3a6055-c121-4ffb-a2a3-5aa0954f10c0"
+  ],
+  "scoreUnits": [
+    {
+      "id": "38e994af-c098-45b6-8b6f-533121b7819b",
+      "library": "H5P.QuestionSet",
+      "raw": 4,
+      "max": 5
+    },
+    {
+      "id": "dcba8ff3-0f1b-4e52-b672-ddf700eaca2f",
+      "library": "H5P.MultiChoice",
+      "raw": 1,
+      "max": 1
+    },
+    {
+      "id": "48dd06a6-ff0b-4dd7-b34d-2c36c7b7c45b",
+      "library": "H5P.QuestionSet",
+      "raw": 8,
+      "max": 10
+    },
+    {
+      "id": "4c0108f1-c84d-47ba-9c17-84cd6cf9927d",
+      "library": "H5P.MultiChoice",
+      "raw": 1,
+      "max": 1
+    },
+    {
+      "id": "f87d7be7-07c5-4b60-8433-301c4c88161c",
+      "library": "H5P.QuestionSet",
+      "raw": 7,
+      "max": 10
+    },
+    {
+      "id": "f0b68244-7a20-4dc2-958c-cc9fedd3abc2",
+      "library": "H5P.MultiChoice",
+      "raw": 1,
+      "max": 1
+    },
+    {
+      "id": "89ff9845-a860-4610-911b-f536a40a346c",
+      "library": "H5P.QuestionSet",
+      "raw": 5,
+      "max": 10
+    }
+  ]
+}

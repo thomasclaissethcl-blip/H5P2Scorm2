@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "testKind": "pont-SCORM-reel-avec-evenements-xAPI-synthetiques",
+  "realLms": false,
+  "realH5pExecution": false,
+  "generatedWith": "tests/scorm-fallback53.mjs",
+  "sourceFixture": "tests/fixtures/interactive-book-score53.json",
+  "scenarios": [
+    {
+      "name": "secours-sans-score-racine",
+      "score": "71.05",
+      "status": "failed",
+      "source": "aggregate",
+      "expectedUnits": 7,
+      "observedUnits": 7
+    },
+    {
+      "name": "dedup-et-nouvelle-reponse",
+      "score": "68.42",
+      "status": "failed",
+      "source": "aggregate",
+      "expectedUnits": 7,
+      "observedUnits": 7
+    },
+    {
+      "name": "natif-tardif-prioritaire",
+      "score": "78.95",
+      "status": "failed",
+      "source": "native",
+      "expectedUnits": 7,
+      "observedUnits": 7
+    },
+    {
+      "name": "refus-perimetre-inconnu",
+      "score": null,
+      "status": "completed",
+      "source": "none",
+      "expectedUnits": 7,
+      "observedUnits": 7
+    },
+    {
+      "name": "questions-imbriquees-evitees",
+      "score": "71.05",
+      "status": "failed",
+      "source": "aggregate",
+      "expectedUnits": 7,
+      "observedUnits": 7
+    },
+    {
+      "name": "reprise-en-scorm-1.2",
+      "score": "71.05",
+      "status": "failed",
+      "source": "aggregate",
+      "expectedUnits": 7,
+      "observedUnits": 7,
+      "suspendChars": 1454
+    },
+    {
+      "name": "plan-desactive-aucune-note",
+      "score": null,
+      "status": "completed",
+      "source": "none",
+      "expectedUnits": 0,
+      "observedUnits": 7
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "expectedFallbackScore": 71.05,
+    "nativePriorityVerified": true,
+    "unknownScoresRejected": true,
+    "resumeVerified": true
+  }
+}

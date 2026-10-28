@@ -41,6 +41,7 @@ def main() -> int:
         ("scorm-scoring", [node, "tests/scorm-scoring.mjs"] if node else None),
         ("runtime-agregation-et-reprise", [node, "tests/scorm-runtime-aggregate52.mjs"] if node else None),
         ("runtime-question-set-imbrique", [node, "tests/scorm-runtime-nested52b.mjs"] if node else None),
+        ("preuve-secours-scorm53", [node, "tests/scorm-fallback53.mjs"] if node else None),
         ("runtime-scorm-scoring", [node, "tests/scorm-runtime-scoring.mjs"] if node else None),
         ("runtime-scorm", [node, "tests/runtime-smoke.mjs"] if node else None),
         ("catalogue-moteurs", [node, "tests/engine-catalog.mjs"] if node else None),
