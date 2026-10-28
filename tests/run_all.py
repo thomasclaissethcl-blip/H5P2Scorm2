@@ -58,6 +58,9 @@ def main() -> int:
         ("syntaxe-catalogue-moteurs", [node, "--check", "src/engine-catalog.js"] if node else None),
         ("syntaxe-profils-h5p", [node, "--check", "src/runtime-profiles.js"] if node else None),
         ("syntaxe-javascript", [node, "--check", "app.js"] if node else None),
+        ("ressources-lecteur-partagees", [node, "tests/player-assets6.mjs"] if node else None),
+        ("copie-h5p-portable", [node, "tests/portable-package6.mjs"] if node else None),
+        ("protection-composants-lot53", [sys.executable, "tests/verify_lot53_nonregression.py"]),
         ("archive-source", [sys.executable, "tests/verify_baseline_archive.py"]),
     ]
     results = []
@@ -84,7 +87,7 @@ def main() -> int:
     report = {
         "schema_version": 1,
         "date_utc": datetime.now(timezone.utc).isoformat(),
-        "scope": "Lot 3 : socle V1.0.1, modules lot 2, prototype de visionneuse, isolation, cache et contrôle SCORM",
+        "scope": "Lot 6.1 : base validée 5.3, manifeste commun du lecteur, copie portable H5P et contrôle de non-régression",
         "python": platform.python_version(),
         "node": None,
         "summary": {"passed": success, "failed": len(results) - success, "total": len(results)},
