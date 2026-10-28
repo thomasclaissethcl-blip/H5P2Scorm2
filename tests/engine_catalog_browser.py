@@ -46,7 +46,7 @@ with sync_playwright() as pw:
     page.set_content(html)
     page.add_script_tag(content=init)
     page.evaluate('(files) => {window.__fixture=files}', archive)
-    for path in ['src/runtime-profiles.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/h5p-dependencies.js',
+    for path in ['src/runtime-profiles.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js',
                  'src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js',
                  'src/youtube-preview.js','app.js']:
         page.add_script_tag(content=(ROOT/path).read_text())

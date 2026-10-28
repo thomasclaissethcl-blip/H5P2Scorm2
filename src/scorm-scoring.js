@@ -16,6 +16,7 @@
     let rootFinalStatement = null;
     let eventsSeen = 0;
     let rejects = 0;
+    let unplannedScored = false;
 
     function finite(value) {
       if (typeof value !== 'number' && (typeof value !== 'string' || value.trim() === '')) return null;
@@ -63,9 +64,10 @@
       rootFinal = false;
       finalNative = false;
       rootFinalStatement = null;
+      unplannedScored = false;
     }
     function aggregate() {
-      if (!rootFinal || !expected.length || finalNative) return null;
+      if (!rootFinal || !expected.length || finalNative || unplannedScored) return null;
       let earned = 0, maximum = 0;
       for (const id of expected) {
         const entry = subScores.get(id);
@@ -94,6 +96,10 @@
       if (child) {
         const childId = subId(st);
         if (childId && score && (v === 'answered' || terminal)) {
+          if (expected.length && !expected.includes(childId)) {
+            unplannedScored = true;
+            return {kind:'ignored',reason:'unplanned-scored-child'};
+          }
           // Remplacer le resultat precedent d'une meme unite, jamais additionner les tentatives.
           subScores.set(childId,{score,final: v === 'answered' || terminal});
           const total = aggregate();
@@ -118,12 +124,41 @@
       if (final) return {kind:'root-final-unscored',final:true,statement:st,reason:'no-reliable-total'};
       return {kind:'ignored',reason:'root-non-final'};
     }
+    function snapshot() {
+      if (!expected.length) return null;
+      const rows = expected.filter(id => subScores.has(id)).map(id => {
+        const entry=subScores.get(id);
+        return {id, raw:entry.score.raw, min:entry.score.min, max:entry.score.max, final:entry.final};
+      });
+      return {v:1, scope:expected.slice().sort().join('|'), registration,
+        rootFinal, finalNative, unplannedScored, rows};
+    }
+    function restore(saved) {
+      if (!expected.length || !saved || saved.v!==1 ||
+        saved.scope!==expected.slice().sort().join('|') || !Array.isArray(saved.rows) ||
+        saved.rows.length>expected.length || (saved.registration!==null && typeof saved.registration!=='string')) return false;
+      const restored=new Map();
+      for(const row of saved.rows) {
+        if (!row || !expected.includes(row.id) || restored.has(row.id) || row.final!==true) return false;
+        const score=parseScore({raw:row.raw,min:row.min,max:row.max},true);
+        if (!score) return false;
+        restored.set(row.id,{score,final:true});
+      }
+      reset();
+      registration=saved.registration;
+      for(const [id,entry] of restored) subScores.set(id,entry);
+      rootFinal=saved.rootFinal===true;
+      finalNative=saved.finalNative===true;
+      unplannedScored=saved.unplannedScored===true;
+      if(rootFinal) rootFinalStatement={verb:{id:'http://adlnet.gov/expapi/verbs/completed'},result:{completion:true}};
+      return true;
+    }
     function summary() {
       const provisional = [...subScores.entries()].map(([id, entry]) => ({id,raw:entry.score.raw,max:entry.score.max,final:entry.final}));
       return {mainLibrary,registration,eventsSeen,observedScores:provisional,expectedCount:expected.length,
-        rootFinal,finalNative,rejectedScores:rejects,aggregateReady:aggregate() !== null};
+        rootFinal,finalNative,unplannedScored,rejectedScores:rejects,aggregateReady:aggregate() !== null};
     }
-    return {ingest,summary};
+    return {ingest,summary,snapshot,restore};
   }
   root.H5PConverterModules = root.H5PConverterModules || {};
   root.H5PConverterModules.scoring = Object.freeze({createTracker});

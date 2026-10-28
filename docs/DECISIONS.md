@@ -29,3 +29,10 @@ Tout nouvel arbitrage doit renseigner : date, responsable, version du CDC affect
 - Décision : présenter H5P Standalone 3.8.1 et 3.8.0 en mode avancé comme essais manuels de visionneuse uniquement. Le profil 3.8.2 reste l'unique sélection automatique et l'unique profil exportable. Bloquer l'export lorsque le lecteur d'essai est sélectionné ; retour explicite au profil 3.8.2 pour exporter.
 - Justification : l'environnement de développement ne donne pas accès aux ressources CDN officielles pour certifier ces versions, et aucun test Firefox réel des candidats n'est encore disponible.
 - Conséquences : fonctionnalité préparatoire de multi-moteur ; la qualification, la sélection automatique entre profils compatibles et les exports SCORM avec un autre moteur demeurent ouverts.
+
+### DEC-L5.2-01 : agrégation composite activable uniquement pour un périmètre fermé
+- Date : 2026-10-28.
+- Référence : NOT-02 à NOT-10 ; SCR-03 à SCR-05 ; REC-12 à REC-17 et REC-24.
+- Décision : conserver le calcul natif comme référence. Ajouter en mode avancé une activation expérimentale volontaire pour les seuls Interactive Book dont tous les exercices notés sont identifiés par des IDs uniques et des bibliothèques explicitement admises. Les cas inconnus, les doublons, les scores supplémentaires et l'absence de fin parent empêchent l'agrégation. Game Map continue de privilégier son résultat global natif.
+- Justification : aucun vrai paquet Interactive Book représentatif n'a encore été qualifié avec cet algorithme dans Moodle. Un changement activé par défaut ferait courir un risque inutile aux activités déjà validées.
+- Condition de promotion : essais Moodle comparant note H5P et note SCORM, retentatives, reprises et journaux d'événements réels, puis validation utilisateur explicite.

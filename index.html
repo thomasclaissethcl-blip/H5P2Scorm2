@@ -115,6 +115,14 @@
         <span>Le profil strict reste la valeur par défaut. Le mode Moodle étendu est fourni pour les environnements administrés où cette capacité est explicitement autorisée.</span>
       </div>
 
+      <details class="preview-details" id="scoreAggregationAdvanced">
+        <summary>Notation composite expérimentale (mode avancé)</summary>
+        <label class="check"><input id="enableExperimentalAggregation" type="checkbox">
+          Autoriser l'agrégation des sous-exercices d'Interactive Book, uniquement si leur périmètre est vérifiable
+        </label>
+        <p class="muted">Désactivé par défaut. Le score global natif reste prioritaire. Une bibliothèque ou une structure non reconnue, des exercices manquants ou l'absence de fin globale empêchent l'agrégation. À tester dans Moodle avant usage pédagogique.</p>
+      </details>
+
       <div class="checks">
         <label class="check"><input id="markIncomplete" type="checkbox" checked> Marquer la tentative « incomplete » au premier lancement <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le statut incomplete" data-help="Recommandé pour permettre au LMS de considérer la tentative comme en cours tant que le H5P n'a pas produit de résultat final.">?</button></label>
         <label class="check"><input id="enableResume" type="checkbox" checked> Activer la reprise via <code>cmi.suspend_data</code> <button type="button" class="help" aria-expanded="false" aria-label="Aide sur l'activation de la reprise" data-help="Désactivez cette option uniquement si le contenu ne doit jamais restaurer une progression précédente. Pour Moodle, il est recommandé de la laisser activée.">?</button></label>
@@ -213,6 +221,7 @@
   <script src="src/engine-catalog.js"></script>
   <script src="src/engine-qualification.js"></script>
   <script src="src/scorm-scoring.js"></script>
+  <script src="src/scorm-score-plan.js"></script>
   <script src="src/h5p-dependencies.js"></script>
   <script src="src/h5p-analysis.js"></script>
   <script src="src/preview-frame.js"></script>
