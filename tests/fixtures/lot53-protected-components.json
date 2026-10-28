@@ -1,0 +1,19 @@
+{
+  "reference": "Version 5.3 fonctionnellement acceptée",
+  "protectedFiles": {
+    "src/h5p-preview.js": "531003c0c0a428a526bd0dfc48bffea425b0838964706324a50848a06fb9f85a",
+    "src/preview-frame.js": "58eafbb2a20a2202b804f5fc942e5c93e005c244a48ebe5da01f495c80fd15b8",
+    "src/youtube-preview.js": "5b76bb31f937c30c2493155865ae3c337ef45ce688dbadb36a598b16dd46b132",
+    "src/scorm-scoring.js": "331addb63a68ed5c0a2a93777fee1237aac083339710fcc7d295d4bb88170edb",
+    "src/scorm-score-plan.js": "b9d29d9934211d9bece9edd52d1f0035f7c4dbfffdcc716b794b6efafb5d06d9",
+    "src/runtime-profiles.js": "06aaab5c14c0dbceea226a469c40ae0299816331f4b877fe47f5bbb3a362ce6a",
+    "src/h5p-analysis.js": "bb8f9e4040dcf1fdcbb0c4f88d1038d504214cd732a34d210e04604050a092cb",
+    "src/h5p-dependencies.js": "5107fbf68d7946a83997f0f2e736c8c6e26700ac1b19940653363afd308761a4",
+    "styles.css": "71db5de95e2ae17f44bbce537f2e31322db7328ce05ae2f1bc5006c47a7bb402"
+  },
+  "protectedScormFunctionBlock": {
+    "start": "  function scormApiSource(",
+    "end": "  function launchHtml(",
+    "sha256": "6d74381760816d95b431b9bf33e8f0b186d5cf02cd7b9559e775508f1c2734e3"
+  }
+}

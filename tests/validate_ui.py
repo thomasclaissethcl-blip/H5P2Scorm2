@@ -35,6 +35,8 @@ missing = required - parser.ids
 assert not missing, f'IDs UI manquants: {sorted(missing)}'
 assert parser.help_count >= 15, f'Nombre de bulles d aide insuffisant: {parser.help_count}'
 assert parser.help_count == parser.help_with_text, 'Une bulle d aide ne contient pas data-help/aria-label'
+assert html.index('src/player-assets.js') < html.index('src="app.js"'), 'Le manifeste doit précéder app.js'
+assert html.index('src/portable-package.js') < html.index('src="app.js"'), 'La copie portable doit précéder app.js'
 assert 'debugResume' not in html and 'debugResume' not in app, 'Ancien diagnostic visuel de reprise encore présent'
 assert "const APP_VERSION = '1.0.1'" in app, 'Version applicative incorrecte'
 assert 'MOODLE_EXTENDED_SUSPEND_DATA_LIMIT = 64000' in app, 'Profil Moodle 64K absent'

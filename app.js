@@ -3,7 +3,7 @@
 
   const APP_VERSION = '1.0.1';
   const modules = globalThis.H5PConverterModules;
-  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview) {
+  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
   const engineCatalog = modules.engineCatalog;
@@ -14,34 +14,9 @@
   const RUNTIME_PROFILE_ID = runtimeProfile.id;
   const STRICT_SUSPEND_DATA_LIMIT = 4000;
   const MOODLE_EXTENDED_SUSPEND_DATA_LIMIT = 64000;
+  const playerAssets = modules.playerAssets;
   const PLAYER_CDN = `https://cdn.jsdelivr.net/npm/h5p-standalone@${PLAYER_VERSION}`;
-  const PLAYER_DIST_FILES = [
-    '/dist/main.bundle.js',
-    '/dist/frame.bundle.js',
-    '/dist/main.bundle.js.LICENSE.txt',
-    '/dist/styles/h5p.css',
-    '/dist/styles/h5p-fonts.css',
-    '/dist/images/h5p.svg',
-    '/dist/images/throbber.gif',
-    '/dist/fonts/h5p-core-30.woff2',
-    '/dist/fonts/h5p-hub-publish.woff',
-    '/dist/fonts/h5p-hub-publish.woff2',
-    '/dist/fonts/h5p-theme.woff2',
-    '/dist/fonts/inter/Inter-ExtraBold.woff2',
-    '/dist/fonts/inter/Inter-ExtraBoldItalic.woff2',
-    '/dist/fonts/inter/inter-v18-cyrillic_cyrillic-ext_greek_greek-ext_latin_latin-ext_vietnamese-600.woff2',
-    '/dist/fonts/inter/inter-v18-cyrillic_cyrillic-ext_greek_greek-ext_latin_latin-ext_vietnamese-600italic.woff2',
-    '/dist/fonts/inter/inter-v18-cyrillic_cyrillic-ext_greek_greek-ext_latin_latin-ext_vietnamese-italic.woff2',
-    '/dist/fonts/inter/inter-v18-cyrillic_cyrillic-ext_greek_greek-ext_latin_latin-ext_vietnamese-regular.woff2',
-    '/dist/fonts/inter/LICENSE.txt',
-    '/dist/fonts/open-sans/open-sans-v40-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_math_symbols_vietnamese-600.woff2',
-    '/dist/fonts/open-sans/open-sans-v40-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_math_symbols_vietnamese-600italic.woff2',
-    '/dist/fonts/open-sans/open-sans-v40-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_math_symbols_vietnamese-700.woff2',
-    '/dist/fonts/open-sans/open-sans-v40-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_math_symbols_vietnamese-700italic.woff2',
-    '/dist/fonts/open-sans/open-sans-v40-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_math_symbols_vietnamese-italic.woff2',
-    '/dist/fonts/open-sans/open-sans-v40-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_math_symbols_vietnamese-regular.woff2',
-    '/dist/fonts/open-sans/OFL.txt'
-  ];
+  const PLAYER_DIST_FILES = playerAssets.paths;
 
   const CORE_TRANSLATIONS = {
     fr: {
@@ -548,11 +523,11 @@
     const distFiles = PLAYER_DIST_FILES;
     let done = 0;
     for (const remotePath of distFiles) {
-      const url = `${PLAYER_CDN}${remotePath}`;
+      const url = playerAssets.remoteUrl(remotePath,PLAYER_VERSION);
       const response = await fetch(url, { cache: 'force-cache' });
       if (!response.ok) throw new Error(`Impossible de récupérer ${remotePath} (HTTP ${response.status}).`);
       const data = await response.arrayBuffer();
-      const localPath = `player/${remotePath.slice('/dist/'.length)}`;
+      const localPath = playerAssets.localPath(remotePath);
       targetZip.file(localPath, data);
       done += 1;
       setGenerationProgress(15 + (done / distFiles.length) * 20, 'Intégration du lecteur H5P');
@@ -762,23 +737,13 @@
 
       setGenerationProgress(8, 'Copie du contenu H5P');
       logLine('Copie du contenu H5P dans le package SCORM…');
-      const paths = Object.keys(state.zip.files);
-      let copied = 0;
-      for (const path of paths) {
-        const entry = state.zip.files[path];
-        if (entry.dir) continue;
-        if (!safeZipPath(path)) throw new Error(`Chemin non sûr refusé : ${path}`);
-        if (path === 'h5p.json' || path === 'content/content.json') continue;
-        const data = await entry.async('uint8array');
-        out.file(`h5p/${path}`, data);
-        copied += 1;
-      }
-
       const outputH5pJson = cloneJson(state.analysis.h5pJson);
       outputH5pJson.language = language;
-      out.file('h5p/h5p.json', JSON.stringify(outputH5pJson, null, 2));
-      out.file('h5p/content/content.json', JSON.stringify(localized.content));
-      logLine(`${copied + 2} fichiers H5P copiés ou reconstruits.`);
+      const copied = await modules.portablePackage.copyH5p({
+        sourceZip:state.zip, targetZip:out, h5pJson:outputH5pJson,
+        contentJson:localized.content, safePath:safeZipPath
+      });
+      logLine(`${copied.total} fichiers H5P copiés ou reconstruits.`);
 
       setGenerationProgress(15, 'Intégration du lecteur H5P');
       await fetchPlayerDist(out);

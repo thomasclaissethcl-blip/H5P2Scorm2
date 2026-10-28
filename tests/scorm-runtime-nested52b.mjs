@@ -3,7 +3,7 @@ const file=fs.readFileSync('app.js','utf8');
 const source=file.replace(/\}\)\(\);\s*$/,`globalThis.__bridgeSource=bridgeSource;\n})();`);
 const app=vm.createContext({console,navigator:{language:'fr'},document:{getElementById(){return {value:'',addEventListener(){}}}},setTimeout,clearTimeout,setInterval,clearInterval});
 app.window=app;app.globalThis=app;app.window.addEventListener=()=>{};
-for(const p of ['src/runtime-profiles.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js']) vm.runInContext(fs.readFileSync(p,'utf8'),app,{filename:p});
+for(const p of ['src/runtime-profiles.js','src/player-assets.js','src/portable-package.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js']) vm.runInContext(fs.readFileSync(p,'utf8'),app,{filename:p});
 vm.runInContext(source,app);
 const q1='11111111-1111-4111-8111-111111111111',q2='22222222-2222-4222-8222-222222222222';
 const nested='33333333-3333-4333-8333-333333333333';
