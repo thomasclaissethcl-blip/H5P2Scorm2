@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "source": "SST406-Dossier1-scorm12(2).zip, h5p/content/content.json",
+  "testType": "inspection-statique",
+  "mainLibrary": "H5P.InteractiveBook",
+  "plan": {
+    "schemaVersion": 2,
+    "enabled": true,
+    "reason": "bounded-interactive-book",
+    "expectedUnitCount": 7,
+    "questionSetUnits": 4,
+    "standaloneUnits": 3,
+    "nestedQuestionIdsExcludedFromSummation": 35,
+    "displayOnlyCounts": {
+      "H5P.AdvancedText": 38,
+      "H5P.Text": 12,
+      "H5P.ImageHotspots": 1,
+      "H5P.Image": 6,
+      "H5P.Accordion": 9
+    }
+  },
+  "limits": [
+    "Aucune verification des evenements xAPI de lecture reelle",
+    "Aucun test Moodle du plan experimental"
+  ]
+}

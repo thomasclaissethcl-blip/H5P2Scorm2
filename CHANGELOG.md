@@ -71,3 +71,11 @@ Première version stable centrée sur Moodle et SCORM 1.2.
 - première reprise de progression via `cmi.suspend_data` ;
 - compression Deflate ;
 - `session_time`, `exit` et politiques de statut.
+
+## Correctif 5.2b, 28 octobre 2026 (expérimental)
+
+- Détection conservatrice des composants purement informatifs Image Hotspots et Accordion.
+- Prise en charge des Question Set comme unités globales de notation dans Interactive Book.
+- Protection contre le double comptage des questions internes et contre les sous-scores inattendus.
+- Contrainte de portée pour le registre de reprise des sous-scores imbriqués.
+- Agrégation toujours facultative, score global natif toujours prioritaire et non-régression du lecteur de référence.
