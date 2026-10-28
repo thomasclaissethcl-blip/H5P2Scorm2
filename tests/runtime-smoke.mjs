@@ -28,7 +28,7 @@ appContext.window = appContext;
 appContext.globalThis = appContext;
 appContext.window.addEventListener = () => {};
 vm.createContext(appContext);
-for (const path of ['src/runtime-profiles.js', 'src/engine-catalog.js','src/engine-qualification.js', 'src/h5p-dependencies.js', 'src/h5p-analysis.js', 'src/preview-frame.js', 'src/h5p-preview.js']) {
+for (const path of ['src/runtime-profiles.js', 'src/engine-catalog.js','src/engine-qualification.js', 'src/scorm-scoring.js', 'src/h5p-dependencies.js', 'src/h5p-analysis.js', 'src/preview-frame.js', 'src/h5p-preview.js']) {
   vm.runInContext(fs.readFileSync(new URL('../' + path, import.meta.url), 'utf8'), appContext, { filename: path });
 }
 vm.runInContext(source, appContext);

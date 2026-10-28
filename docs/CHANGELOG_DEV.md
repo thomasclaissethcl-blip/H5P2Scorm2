@@ -81,3 +81,10 @@ Ajustement proportionnel de la scène selon la hauteur disponible en plein écra
 - Sept critères manuels et compteurs d'observations locales, rapports JSON individuels par moteur et par fichier.
 - Aucune activation automatique des lecteurs 3.8.0/3.8.1 ni modification de la génération SCORM.
 - Tests unitaires et essai Chromium du processus de qualification ajoutés ; qualification sur les vrais lecteurs en attente.
+
+## Lot 5.1, consolidation initiale de la notation SCORM
+
+- Nouveau module de suivi des scores et des evenements xAPI (doublons, tentatives, sources enfant/racine).
+- Statut final des Game Map lors de la transmission racine `answered` et score valide.
+- Agregation uniquement si le perimetre exhaustif des exercices est explicitement connu ; pas d'agregation automatique activee sans preuve.
+- Nouveaux tests SCORM unitaires et d'integration. Aucune modification des lecteurs, de la visionneuse ou du moteur SCORM 1.2.
