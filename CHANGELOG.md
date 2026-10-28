@@ -1,5 +1,13 @@
 # Changelog
 
+## Lot 7 : export HTML multifichier (version applicative maintenue à 1.0.1)
+
+- Ajout de l'export ZIP HTML multifichier portable pour hébergement statique HTTP(S) et sous-répertoires.
+- Réutilisation du lecteur H5P 3.8.2 et du mécanisme de copie H5P validés au lot 6.1.
+- Lanceur HTML distinct, sans API ni manifeste SCORM, rapport de génération et consignes Moodle « Fichier ».
+- Deux vrais ZIP générés en Chromium avec Game Map et Interactive Book.
+- Recette web/Moodle ouverte ; l'option HTML monofichier n'est pas encore développée.
+
 ## 1.0.1
 
 Version de stabilisation et de maintenabilité de la V1.

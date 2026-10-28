@@ -51,3 +51,11 @@ Une exigence ne passe au statut « vérifiée » qu'avec une preuve correspondan
 Le projet livré ici provient d'un dépôt Git créé **localement** : `main` contient uniquement la source originale ; `development/phase-0-socle` apporte l'outillage et la documentation ; `development/phase-1-modules` ajoute les modules d’analyse. Aucun dépôt GitHub n'a été modifié ou créé. Le bundle Git livré à part permet de récupérer cette histoire et les deux branches.
 
 Prochain lot : visionneuse isolée, avec analyse préalable de la sécurité et des ressources. Ne pas relever artificiellement le plafond Core API 1.28 ni remplacer le runtime H5P Standalone 3.8.2 sans campagne de vérification.
+
+## Extension lot 7 (28 octobre 2026)
+
+L'export HTML multifichier est disponible via le module `src/html-multifile.js` ; le lecteur et le contenu portable restent partagés avec SCORM (`src/player-assets.js`, `src/portable-package.js`).
+
+Vérifications : `node tests/html-multifile7.mjs`, `python tests/run_all.py`. Deux conversions réelles (Game Map 1.9.8, Interactive Book SST406) ont été effectuées dans Chromium avec JSZip réel et les ressources du lecteur 3.8.2 reprises d'archives de référence. La navigation HTTP(S) étant bloquée dans l'environnement de vérification, la lecture complète après déploiement et la ressource Moodle « Fichier » attendent la contre-recette utilisateur.
+
+Respecter les quatre exigences HMF-01 à HMF-04 et les chemins relatifs au fichier `index.html`. Ne jamais introduire le pont SCORM dans cet export.

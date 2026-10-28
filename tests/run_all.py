@@ -61,6 +61,8 @@ def main() -> int:
         ("ressources-lecteur-partagees", [node, "tests/player-assets6.mjs"] if node else None),
         ("copie-h5p-portable", [node, "tests/portable-package6.mjs"] if node else None),
         ("protection-composants-lot53", [sys.executable, "tests/verify_lot53_nonregression.py"]),
+        ("lanceur-html-multifichier", [node, "tests/html-multifile7.mjs"] if node else None),
+        ("syntaxe-module-html", [node, "--check", "src/html-multifile.js"] if node else None),
         ("archive-source", [sys.executable, "tests/verify_baseline_archive.py"]),
     ]
     results = []
@@ -87,7 +89,7 @@ def main() -> int:
     report = {
         "schema_version": 1,
         "date_utc": datetime.now(timezone.utc).isoformat(),
-        "scope": "Lot 6.1 : base validée 5.3, manifeste commun du lecteur, copie portable H5P et contrôle de non-régression",
+        "scope": "Lot 7 : HTML multifichier sans SCORM, moteur commun 6.1 et non-régression 5.3",
         "python": platform.python_version(),
         "node": None,
         "summary": {"passed": success, "failed": len(results) - success, "total": len(results)},
@@ -96,7 +98,7 @@ def main() -> int:
             "Tests principalement unitaires et structurels, pas de validation de lecture H5P dans un vrai navigateur.",
             "Aucune exécution du SCORM dans Moodle ou dans un autre LMS.",
             "Visionneuse expérimentale : tests navigateur avec substitut, aucun vrai H5P Standalone ni contenu H5P complexe validé dans cet environnement.",
-            "Les exports HTML futurs ne sont pas encore développés.",
+            "Le HTML multifichier nécessite une recette HTTP(S) et Moodle dans des environnements réels, selon leurs règles de sécurité.",
         ],
     }
     if node:

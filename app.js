@@ -3,7 +3,7 @@
 
   const APP_VERSION = '1.0.1';
   const modules = globalThis.H5PConverterModules;
-  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage) {
+  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage || !modules?.htmlMultifile) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
   const engineCatalog = modules.engineCatalog;
@@ -106,6 +106,8 @@
   const cssFile = el('cssFile');
   const analyzeBtn = el('analyzeBtn');
   const generateBtn = el('generateBtn');
+  const generateHtmlBtn = el('generateHtmlBtn');
+  let generating = false;
   const diagnostic = el('diagnostic');
   const log = el('log');
   const generationProgressWrap = el('generationProgressWrap');
@@ -447,6 +449,7 @@
     if (!profile || !state.analysis?.ok) return;
     state.previewProfileId = profile.id;
     generateBtn.disabled = !engineCatalog.canExportWithPreview(profile.id);
+    generateHtmlBtn.disabled = generateBtn.disabled;
     const notice = diagnostic.querySelector('#previewEngineNotice');
     if (notice) notice.textContent = engineCatalog.canExportWithPreview(profile.id)
       ? 'Lecteur de référence : export SCORM autorisé si le H5P est valide.'
@@ -495,6 +498,7 @@
     clearPreview();
     clearLog();
     generateBtn.disabled = true;
+    generateHtmlBtn.disabled = true;
     diagnostic.className = 'diagnostic';
     diagnostic.textContent = 'Analyse en cours…';
     try {
@@ -503,6 +507,7 @@
       state.analysis = await analyzeH5P(state.zip);
       renderDiagnostic(state.analysis);
       generateBtn.disabled = !state.analysis.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
+      generateHtmlBtn.disabled = generateBtn.disabled;
       if (state.analysis.ok) {
         void launchPreview();
         logLine(`Analyse terminée : package exploitable. Langue retenue : ${state.analysis.language.selected}.`);
@@ -706,12 +711,14 @@
   }
 
   async function generateScorm() {
-    if (!state.analysis?.ok || !state.zip) return;
+    if (generating || !state.analysis?.ok || !state.zip) return;
     if (!engineCatalog.canExportWithPreview(state.previewProfileId)) {
       logLine('Export interdit : moteur expérimental sélectionné. Revenir au lecteur validé 3.8.2.');
       return;
     }
+    generating = true;
     generateBtn.disabled = true;
+    generateHtmlBtn.disabled = true;
     clearLog();
     resetGenerationProgress();
     try {
@@ -822,7 +829,81 @@
       generationProgressPhase.textContent = 'Échec';
       logLine(`Échec de génération : ${error.message}`);
     } finally {
+      generating = false;
       generateBtn.disabled = !state.analysis?.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
+      generateHtmlBtn.disabled = generateBtn.disabled;
+    }
+  }
+
+  // Lot 7 : le HTML et le SCORM partagent les ressources, mais pas les lanceurs.
+  async function generateHtmlMultifile() {
+    if (generating || !state.analysis?.ok || !state.zip) return;
+    if (!engineCatalog.canExportWithPreview(state.previewProfileId)) {
+      logLine('Export HTML interdit : revenir au moteur qualifié H5P Standalone 3.8.2.');
+      return;
+    }
+    generating = true;
+    generateHtmlBtn.disabled = true;
+    generateBtn.disabled = true;
+    clearLog();
+    resetGenerationProgress();
+    try {
+      const out = new JSZip();
+      const title = el('courseTitle').value.trim() || state.analysis.h5pJson?.title || 'Activité H5P';
+      const language = state.analysis.language.selected;
+      setGenerationProgress(3,'Préparation du mini-site');
+      logLine(`Export HTML multifichier : localisation ${language}…`);
+      const localized = await localizeContent(state.zip,state.analysis);
+      const metadata = cloneJson(state.analysis.h5pJson);
+      metadata.language = language;
+      setGenerationProgress(8,'Copie du contenu H5P');
+      const copied = await modules.portablePackage.copyH5p({
+        sourceZip:state.zip,targetZip:out,h5pJson:metadata,
+        contentJson:localized.content,safePath:safeZipPath
+      });
+      logLine(`${copied.total} fichiers H5P intégrés au mini-site.`);
+      setGenerationProgress(15,'Intégration du lecteur H5P');
+      await fetchPlayerDist(out);
+      const css=[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n');
+      const html = modules.htmlMultifile;
+      out.file('custom/custom.css',css || '/* Aucun style personnalisé */\n');
+      out.file('index.html',html.indexHtml({title,language}));
+      out.file('html/player-init.js',html.bootstrapSource({language,translations:coreTranslationsFor(language)}));
+      out.file('localization-report.json',JSON.stringify(localized.stats,null,2));
+      out.file('generation-report.json',JSON.stringify(html.generationReport({
+        title,language,mainLibrary:state.analysis.mainKey,libraries:state.analysis.libraries,
+        profileId:RUNTIME_PROFILE_ID,playerVersion:PLAYER_VERSION,coreApi:H5P_CORE_API_SUPPORTED,
+        localization:localized.stats,cssLength:new TextEncoder().encode(css).length
+      }),null,2));
+      out.file('README.txt',html.readme({title,language,playerVersion:PLAYER_VERSION}));
+      // L'HTML simple n'a aucun manifest SCORM ni API de notation LMS.
+      const files=Object.keys(out.files).filter(path=>!out.files[path].dir);
+      if (files.some(path=>path.startsWith('scorm/')||path==='imsmanifest.xml'||path==='score-plan-report.json'))
+        throw new Error('Un composant SCORM a été inclus par erreur.');
+      logLine('Compression du mini-site HTML…');
+      setGenerationProgress(40,'Compression du HTML multifichier');
+      const blob=await out.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6},streamFiles:true},meta=>{
+        setGenerationProgress(40+Math.max(0,Math.min(100,meta.percent))*0.6,'Compression du HTML multifichier');
+      });
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;
+      link.download=`${cleanFilename(state.file.name)}-html-multifichier.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setGenerationProgress(100,'Terminé');
+      logLine(`Terminé : ${link.download}. Publiez tout le contenu du ZIP ; index.html est le point d'entrée.`);
+    } catch(error) {
+      console.error(error);
+      generationProgressPhase.textContent='Échec';
+      logLine(`Échec de génération HTML : ${error.message}`);
+    } finally {
+      generating = false;
+      const permitted=Boolean(state.analysis?.ok&&engineCatalog.canExportWithPreview(state.previewProfileId));
+      generateHtmlBtn.disabled=!permitted;
+      generateBtn.disabled=!permitted;
     }
   }
 
@@ -834,6 +915,7 @@
     state.previewProfileId = RUNTIME_PROFILE_ID;
     state.qualificationSessions.clear();
     generateBtn.disabled = true;
+    generateHtmlBtn.disabled = true;
     analyzeBtn.disabled = !state.file;
     resetGenerationProgress();
     const dropZone = el('h5pDropZone');
@@ -969,4 +1051,5 @@
   updateConditionalFields();
   analyzeBtn.addEventListener('click', loadAndAnalyze);
   generateBtn.addEventListener('click', generateScorm);
+  generateHtmlBtn.addEventListener('click', generateHtmlMultifile);
 })();

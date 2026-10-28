@@ -8,6 +8,16 @@ Le navigateur reçoit un fichier `.h5p`, l'analyse localement, applique éventue
 
 Le fichier H5P et le CSS personnalisé ne sont pas envoyés vers un serveur par l'application. Une connexion Internet reste nécessaire pendant la conversion pour charger JSZip dans l'interface et récupérer la distribution figée de H5P Standalone 3.8.2, qui est ensuite embarquée dans le SCORM produit.
 
+## Extension du lot 7 : mini-site HTML multifichier
+
+Le bouton **« Générer le HTML multifichier »** produit un ZIP autonome avec `index.html`, `html/player-init.js`, les ressources du lecteur H5P Standalone 3.8.2 dans `player/`, le contenu et les bibliothèques dans `h5p/`, les styles dans `custom/`, et un rapport `generation-report.json`.
+
+Après extraction, publier **tout le contenu** de l'archive sous une URL HTTP(S) statique, éventuellement dans un sous-répertoire. L'application générée ne requiert ni backend ni CDN à la lecture. Elle peut être importée comme mini-site dans Moodle via une ressource « Fichier » si Moodle autorise les scripts et les ressources internes du ZIP. Décompresser les fichiers et définir `index.html` comme fichier principal.
+
+Le format HTML simple ne fournit aucun suivi SCORM, aucune note LMS ni reprise LMS. Les ressources externes demandées par certains contenus H5P, notamment YouTube, peuvent nécessiter un accès réseau et des autorisations spécifiques. L'exécution `file://` n'est pas garantie. La version HTML monofichier et la conversion par lots restent à développer.
+
+Documentation et recette : `docs/LOT7_HTML_MULTIFICHIER.md` et `docs/CONTRE_RECETTE_LOT7.md`.
+
 ## Fonctionnalités de la V1
 
 - sélection classique ou glisser-déposer d'un fichier `.h5p` ;

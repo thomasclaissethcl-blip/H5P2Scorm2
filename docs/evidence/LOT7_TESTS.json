@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-10-28T14:48:49.781642+00:00",
+  "scope": "Lot 7 : HTML multifichier sans SCORM, moteur commun 6.1 et non-régression 5.3",
+  "python": "3.13.5",
+  "node": "v22.16.0",
+  "summary": {
+    "passed": 35,
+    "failed": 0,
+    "total": 35
+  },
+  "results": [
+    {
+      "test": "fixtures-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": "OK poc-valid.h5p\nOK poc-language.h5p\nOK poc-resume.h5p\nOK poc-missing-dependency.h5p\nOK poc-invalid.h5p\nOK poc-coreapi-future.h5p (blocage Core API attendu)"
+    },
+    {
+      "test": "coherence-release",
+      "status": "success",
+      "return_code": 0,
+      "output": "Release 1.0.1 cohérente : OK"
+    },
+    {
+      "test": "structure-interface",
+      "status": "success",
+      "return_code": 0,
+      "output": "Interface V1 : OK"
+    },
+    {
+      "test": "modules-analyse-parite",
+      "status": "success",
+      "return_code": 0,
+      "output": "Parité analyse V1 : poc-coreapi-future.h5p OK (bloqué)\nParité analyse V1 : poc-invalid.h5p OK (bloqué)\nParité analyse V1 : poc-language.h5p OK (valide)\nParité analyse V1 : poc-missing-dependency.h5p OK (bloqué)\nParité analyse V1 : poc-resume.h5p OK (valide)\nParité analyse V1 : poc-valid.h5p OK (valide)\nDépendances cycliques/transitives, Core API future et invalide : OK\nContrats des modules et absence de DOM : OK"
+    },
+    {
+      "test": "plan-sous-scores",
+      "status": "success",
+      "return_code": 0,
+      "output": "Plan de score conservateur Interactive Book : champs obligatoires, refus de perimetre ambigu OK"
+    },
+    {
+      "test": "agregation-reprise",
+      "status": "success",
+      "return_code": 0,
+      "output": "Agrégation conditionnelle et reprise du registre : score final, doublons, priorite native, tentative OK"
+    },
+    {
+      "test": "plan-h5p-imbriques",
+      "status": "success",
+      "return_code": 0,
+      "output": "Plan imbrique : groupe non double-compte, affichages valides, sous-structures inconnues refusees OK"
+    },
+    {
+      "test": "agregation-imbriquee",
+      "status": "success",
+      "return_code": 0,
+      "output": "Tracker imbrique : 0 double compte, native prioritaire, reprise liee au perimetre, incomplet refuse OK"
+    },
+    {
+      "test": "syntaxe-plan-scores",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "scorm-scoring",
+      "status": "success",
+      "return_code": 0,
+      "output": "Notation SCORM : suivi, priorite du score natif, Game Map, aggregation conditionnelle, doublons et invalides OK"
+    },
+    {
+      "test": "runtime-agregation-et-reprise",
+      "status": "success",
+      "return_code": 0,
+      "output": "Pont SCORM : pas de score partiel, reprise via suspend_data, agregat et score natif prioritaire OK"
+    },
+    {
+      "test": "runtime-question-set-imbrique",
+      "status": "success",
+      "return_code": 0,
+      "output": "Pont SCORM imbrique : sous-question ignoree, 2 unites, reprise, 66.67 et 90 natif prioritaires OK"
+    },
+    {
+      "test": "preuve-secours-scorm53",
+      "status": "success",
+      "return_code": 0,
+      "output": "Lot 5.3 : 7 scenarios verifies (dont secours 27/38, priorite native, reprise, doublons et refus de perimetre inconnu)."
+    },
+    {
+      "test": "runtime-scorm-scoring",
+      "status": "success",
+      "return_code": 0,
+      "output": "SCORM runtime : Game Map final answered, multi-score unbounded not invented, native score stable OK"
+    },
+    {
+      "test": "runtime-scorm",
+      "status": "success",
+      "return_code": 0,
+      "output": "Runtime SCORM généré : OK"
+    },
+    {
+      "test": "catalogue-moteurs",
+      "status": "success",
+      "return_code": 0,
+      "output": "Catalogue versionné, sélection restrictive, rapport bibliothèque et compatibilité : OK"
+    },
+    {
+      "test": "qualification-manuelle",
+      "status": "success",
+      "return_code": 0,
+      "output": "Lot 4.3 : suivi des preuves, statut non qualifié, confidentialité et sessions indépendantes OK"
+    },
+    {
+      "test": "essais-moteurs",
+      "status": "success",
+      "return_code": 0,
+      "output": "Lot 4.2: sélection explicite candidats, verrou export, retour référence et rapport cohérent OK"
+    },
+    {
+      "test": "module-visionneuse",
+      "status": "success",
+      "return_code": 0,
+      "output": "Module visionneuse : chemins, CSP, ressources, cache lecteur OK"
+    },
+    {
+      "test": "youtube-consentement",
+      "status": "success",
+      "return_code": 0,
+      "output": "YouTube : ID validés, URLs dangereuses refusées, contrôle de consentement et isolation de la page."
+    },
+    {
+      "test": "syntaxe-visionneuse",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-frame-isole",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-dependances-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-modules-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-scoring",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-qualification-moteurs",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-catalogue-moteurs",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-profils-h5p",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "syntaxe-javascript",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "ressources-lecteur-partagees",
+      "status": "success",
+      "return_code": 0,
+      "output": "Lot 6.1: 25 ressources du lecteur identiques a 5.3; URL et chemins verifies; candidats bloques."
+    },
+    {
+      "test": "copie-h5p-portable",
+      "status": "success",
+      "return_code": 0,
+      "output": "Lot 6.1: copie H5P identique, metadonnees reconstruites, archives sources intactes, chemin dangereux refuse."
+    },
+    {
+      "test": "protection-composants-lot53",
+      "status": "success",
+      "return_code": 0,
+      "output": "Lot 6.1 : fichiers fonctionnels protégés et fonctions SCORM identiques au lot 5.3 : OK"
+    },
+    {
+      "test": "lanceur-html-multifichier",
+      "status": "success",
+      "return_code": 0,
+      "output": "Lot 7 : lanceur HTML autonome, chemins relatifs, CSP hote, CSS, traduction et rapport : OK\nError: Le lecteur H5P local ne peut pas être initialisé.\n    at Object.boot [as DOMContentLoaded] (evalmachine.<anonymous>:24:15)\n    at file:///mnt/data/h5p_lot7_work/H5P-Converter/tests/html-multifile7.mjs:39:15"
+    },
+    {
+      "test": "syntaxe-module-html",
+      "status": "success",
+      "return_code": 0,
+      "output": ""
+    },
+    {
+      "test": "archive-source",
+      "status": "success",
+      "return_code": 0,
+      "output": "Archive originale V1.0.1 et SHA-256 : OK"
+    }
+  ],
+  "limitations": [
+    "Tests principalement unitaires et structurels, pas de validation de lecture H5P dans un vrai navigateur.",
+    "Aucune exécution du SCORM dans Moodle ou dans un autre LMS.",
+    "Visionneuse expérimentale : tests navigateur avec substitut, aucun vrai H5P Standalone ni contenu H5P complexe validé dans cet environnement.",
+    "Le HTML multifichier nécessite une recette HTTP(S) et Moodle dans des environnements réels, selon leurs règles de sécurité."
+  ]
+}

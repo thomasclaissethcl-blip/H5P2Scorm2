@@ -5,7 +5,7 @@ const file = fs.readFileSync('app.js','utf8');
 const js=file.replace(/\}\)\(\);\s*$/,`globalThis.__bridgeSource=bridgeSource;\n})();`);
 const app=vm.createContext({console,navigator:{language:'fr'},document:{getElementById(){return {value:'',addEventListener(){}}}},setTimeout,clearTimeout,setInterval,clearInterval});
 app.window=app; app.globalThis=app; app.window.addEventListener=()=>{};
-for (const f of ['src/runtime-profiles.js','src/player-assets.js','src/portable-package.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js']) vm.runInContext(fs.readFileSync(f,'utf8'),app,{filename:f});
+for (const f of ['src/runtime-profiles.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js']) vm.runInContext(fs.readFileSync(f,'utf8'),app,{filename:f});
 vm.runInContext(js,app);
 function launch(lib) {
  const values={'cmi.core.lesson_status':'incomplete'};

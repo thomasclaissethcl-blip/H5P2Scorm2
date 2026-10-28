@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>H5P vers SCORM 1.2 - Version 1.0.1</title>
+  <title>H5P Converter : SCORM 1.2 et HTML multifichier - Version 1.0.1</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,8 +13,8 @@
         <p class="eyebrow">Version 1.0.1</p>
         <span class="privacy-pill">Traitement local dans le navigateur</span>
       </div>
-      <h1>H5P vers SCORM 1.2</h1>
-      <p>Convertit un fichier H5P en paquetage SCORM 1.2 autonome, avec localisation, CSS personnalisé, score normalisé sur 100 et reprise de progression.</p>
+      <h1>H5P vers SCORM 1.2 et HTML multifichier</h1>
+      <p>Convertit un fichier H5P en paquetage SCORM 1.2 avec suivi pédagogique, ou en mini-site HTML multifichier autonome pour un hébergement web statique compatible. La localisation et le CSS personnalisé sont disponibles pour les deux formats.</p>
     </header>
 
     <section class="panel">
@@ -75,7 +75,7 @@
 
       <div class="grid three">
         <div class="field">
-          <label for="courseTitle">Titre du SCO <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le titre du SCO" data-help="Titre affiché par le LMS pour la ressource SCORM. Le nom du fichier H5P est proposé automatiquement et peut être modifié.">?</button></label>
+          <label for="courseTitle">Titre de l’activité / du SCO <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le titre du SCO" data-help="Titre de l’activité exportée, utilisé dans la page HTML ou dans le SCO SCORM. Le nom du fichier H5P est proposé automatiquement et peut être modifié.">?</button></label>
           <input id="courseTitle" type="text" value="Activité H5P">
         </div>
         <div class="field">
@@ -183,10 +183,14 @@
       <div class="row between section-title compact">
         <div>
           <p class="step">Étape 5</p>
-          <h2>Génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la génération" data-help="Le navigateur construit le ZIP SCORM localement. Une connexion Internet est actuellement nécessaire au moment de la conversion pour récupérer la version figée du lecteur H5P Standalone.">?</button></h2>
+          <h2>Génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la génération" data-help="Le navigateur construit le ZIP SCORM ou HTML multifichier localement. Une connexion Internet est actuellement nécessaire au moment de la conversion pour récupérer la version figée du lecteur H5P Standalone. Les exports restent autonomes après génération.">?</button></h2>
         </div>
-        <button id="generateBtn" type="button" disabled>Générer le SCORM</button>
+        <div class="preview-actions">
+          <button id="generateHtmlBtn" type="button" disabled>Générer le HTML multifichier</button>
+          <button id="generateBtn" type="button" disabled>Générer le SCORM</button>
+        </div>
       </div>
+      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Aucun suivi SCORM dans ce format. Les réglages de notation et de reprise ci-dessus concernent uniquement l'export SCORM.</p>
       <div id="generationProgressWrap" class="generation-progress" hidden>
         <div class="generation-progress-head">
           <span id="generationProgressPhase">Génération</span>
@@ -205,13 +209,13 @@
         </div>
       </div>
       <ul>
-        <li>SCORM 1.2 uniquement, avec Moodle comme cible de validation prioritaire.</li>
+        <li>Deux sorties disponibles : SCORM 1.2 avec suivi LMS et HTML multifichier sans suivi LMS. HTML monofichier encore indisponible.</li>
         <li>Runtime figé : H5P Standalone 3.8.2, plafond de compatibilité déclaré H5P Core API 1.28. Une bibliothèque requérant une API plus récente bloque la génération.</li>
         <li>Score SCORM normalisé de 0 à 100, quel que soit le barème natif du H5P.</li>
         <li>Reprise stricte limitée à 4000 caractères après optimisation. Le mode Moodle 64K est expérimental.</li>
         <li>Les messages ordinaires de sauvegarde ne sont jamais affichés dans l'activité. Seules les alertes utiles peuvent apparaître.</li>
         <li>Certains types H5P peuvent restaurer leur progression sans restaurer tous les détails visuels.</li>
-        <li>Le contenu H5P et le CSS sont traités localement. Le lecteur H5P est récupéré au moment de la génération puis embarqué dans le SCORM.</li>
+        <li>Le contenu H5P et le CSS sont traités localement. Le lecteur H5P est récupéré au moment de la génération puis embarqué dans les deux formats. Aucun CDN n’est nécessaire à la lecture du mini-site HTML.</li>
       </ul>
     </section>
   </main>
@@ -221,6 +225,7 @@
   <script src="src/engine-catalog.js"></script>
   <script src="src/player-assets.js"></script>
   <script src="src/portable-package.js"></script>
+  <script src="src/html-multifile.js"></script>
   <script src="src/engine-qualification.js"></script>
   <script src="src/scorm-scoring.js"></script>
   <script src="src/scorm-score-plan.js"></script>
