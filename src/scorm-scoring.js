@@ -8,6 +8,8 @@
     const expected = Array.isArray(options.expectedSubContentIds)
       ? [...new Set(options.expectedSubContentIds.filter(id => typeof id === 'string' && id.trim()).map(id => id.trim()))]
       : [];
+    const ignoredNested = new Set(Array.isArray(options.ignoredNestedSubContentIds)
+      ? options.ignoredNestedSubContentIds.filter(id => typeof id === 'string' && id.trim()) : []);
     const subScores = new Map();
     const seenStatements = new Set();
     let registration = null;
@@ -95,11 +97,20 @@
       const terminal = finalSignal(st,v);
       if (child) {
         const childId = subId(st);
-        if (childId && score && (v === 'answered' || terminal)) {
-          if (expected.length && !expected.includes(childId)) {
+        // Tout score provenant d'une unite inconnue rend le perimetre incertain,
+        // meme si le verbe ne signale pas encore une reponse definitive ou si
+        // le score xAPI est invalide. Seuls les enfants connus d'un Question Set
+        // sont ignores sans bloquer l'agregation (le score du groupe fait foi).
+        if (expected.length && st.result?.score) {
+          if (childId && ignoredNested.has(childId)) {
+            return {kind:'ignored',reason:'included-in-question-set'};
+          }
+          if (!childId || !expected.includes(childId)) {
             unplannedScored = true;
             return {kind:'ignored',reason:'unplanned-scored-child'};
           }
+        }
+        if (childId && score && (v === 'answered' || terminal)) {
           // Remplacer le resultat precedent d'une meme unite, jamais additionner les tentatives.
           subScores.set(childId,{score,final: v === 'answered' || terminal});
           const total = aggregate();
@@ -130,12 +141,15 @@
         const entry=subScores.get(id);
         return {id, raw:entry.score.raw, min:entry.score.min, max:entry.score.max, final:entry.final};
       });
-      return {v:1, scope:expected.slice().sort().join('|'), registration,
+      return {v:1, scope:expected.slice().sort().join('|'),
+        ...(ignoredNested.size ? {nestedScope:[...ignoredNested].sort().join('|')} : {}), registration,
         rootFinal, finalNative, unplannedScored, rows};
     }
     function restore(saved) {
       if (!expected.length || !saved || saved.v!==1 ||
-        saved.scope!==expected.slice().sort().join('|') || !Array.isArray(saved.rows) ||
+        saved.scope!==expected.slice().sort().join('|') ||
+        (ignoredNested.size ? saved.nestedScope!==[...ignoredNested].sort().join('|') : saved.nestedScope!==undefined) ||
+        !Array.isArray(saved.rows) ||
         saved.rows.length>expected.length || (saved.registration!==null && typeof saved.registration!=='string')) return false;
       const restored=new Map();
       for(const row of saved.rows) {
@@ -156,7 +170,8 @@
     function summary() {
       const provisional = [...subScores.entries()].map(([id, entry]) => ({id,raw:entry.score.raw,max:entry.score.max,final:entry.final}));
       return {mainLibrary,registration,eventsSeen,observedScores:provisional,expectedCount:expected.length,
-        rootFinal,finalNative,unplannedScored,rejectedScores:rejects,aggregateReady:aggregate() !== null};
+        rootFinal,finalNative,unplannedScored,rejectedScores:rejects,
+        ignoredNestedCount:ignoredNested.size,aggregateReady:aggregate() !== null};
     }
     return {ingest,summary,snapshot,restore};
   }

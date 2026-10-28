@@ -10,9 +10,9 @@ const score=(id,lib='H5P.MultiChoice 1.16')=>({library:lib,params:{},subContentI
 const book=(nodes)=>({chapters:nodes.map(node=>({library:'H5P.Column 1.21',params:{content:[{content:node}]}}))});
 const yes=plan(book([text,score(q1),score(q2,'H5P.Blanks 1.14')]));
 assert.equal(yes.enabled,true);assert.equal(yes.expectedSubContentIds.length,2);
-assert.equal(plan(book([text,text])).reason,'no-scored-exercises');
+assert.equal(plan(book([text,{...text,subContentId:"55555555-5555-4555-8555-555555555555"}])).reason,'no-scored-exercises');
 assert.equal(plan(book([score(q1),score(q1)])).reason,'duplicate-subcontent-id');
-assert.equal(plan(book([score(q1),score(q2,'H5P.QuestionSet 1.2')])).enabled,false);
+assert.equal(plan(book([score(q1),score(q2,'H5P.QuestionSet 1.2')])).enabled,false); // Groupe sans questions
 assert.equal(plan(book([score(q1),{...text,library:'H5P.InteractiveVideo 1.26'}])).enabled,false);
 assert.equal(plan(book([score(q1),{...text,library:'H5P.FakeUnknown 9.9'}])).enabled,false);
 assert.equal(plan(book([score('bad')])).enabled,false);
