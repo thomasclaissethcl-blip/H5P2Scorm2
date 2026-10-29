@@ -1,5 +1,14 @@
 # Changelog
 
+## Lot 8.3a : premier lecteur H5P HTML monofichier interactif (essai, 29 octobre 2026)
+
+- Résolveur autonome des ressources H5P intégrées, incluant fetch, XMLHttpRequest, scripts dynamiques, feuilles CSS, images et polices.
+- Prototype interactif distinct des deux exportateurs validés, toujours disponible après retour utilisateur positif du correctif 8.2c.
+- Sur Chromium avec document injecté : H5P.AdvancedText rendu et H5P.GameMap affiché, étape Welcome ouverte. Trois requêtes médias de Game Map ont échoué dans ce banc de test.
+- Taille de ressources intégrées plafonnée à 32 Mio. Aucun résultat LMS transmis. Repli HTML multifichier explicite.
+- 48 tests automatisés réussis ; ouverture directe file:// et déploiements HTTP(S)/Moodle restent à valider.
+
+
 ## Correctif 7d et lot 8.2 (version applicative maintenue à 1.0.1)
 
 - Quatre marges ordinateur, quatre marges mobile (media query 768 px), marges mobile à zéro par défaut. Export SCORM et HTML multifichier sans modification des composants internes H5P.

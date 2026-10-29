@@ -113,6 +113,7 @@
   const generateHtmlBtn = el('generateHtmlBtn');
   const singlefileDiagnosticBtn=el('singlefileDiagnosticBtn');
   const singlefileResourceBtn=el('singlefileResourceBtn');
+  const singlefileInteractiveBtn=el('singlefileInteractiveBtn');
   let generating = false;
   const diagnostic = el('diagnostic');
   const log = el('log');
@@ -457,6 +458,7 @@
     generateBtn.disabled = !engineCatalog.canExportWithPreview(profile.id);
     generateHtmlBtn.disabled = generateBtn.disabled;
     singlefileResourceBtn.disabled = generateBtn.disabled;
+    singlefileInteractiveBtn.disabled = generateBtn.disabled;
     const notice = diagnostic.querySelector('#previewEngineNotice');
     if (notice) notice.textContent = engineCatalog.canExportWithPreview(profile.id)
       ? 'Lecteur de référence : export SCORM autorisé si le H5P est valide.'
@@ -506,6 +508,7 @@
     clearLog();
     generateBtn.disabled = true;
     generateHtmlBtn.disabled = true;
+    singlefileInteractiveBtn.disabled = true;
     diagnostic.className = 'diagnostic';
     diagnostic.textContent = 'Analyse en cours…';
     try {
@@ -515,6 +518,7 @@
       renderDiagnostic(state.analysis);
       singlefileDiagnosticBtn.disabled = false;
       singlefileResourceBtn.disabled = !state.analysis.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
+      singlefileInteractiveBtn.disabled = singlefileResourceBtn.disabled;
       generateBtn.disabled = !state.analysis.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
       generateHtmlBtn.disabled = generateBtn.disabled;
       if (state.analysis.ok) {
@@ -528,6 +532,7 @@
       state.analysis = null;
       singlefileDiagnosticBtn.disabled = true;
       singlefileResourceBtn.disabled = true;
+      singlefileInteractiveBtn.disabled = true;
       diagnostic.className = 'diagnostic status-error';
       diagnostic.textContent = `Impossible de lire l’archive : ${error.message}`;
       logLine(`Erreur : ${error.message}`);
@@ -887,6 +892,7 @@
     }
     generating=true;
     singlefileResourceBtn.disabled=true;
+    singlefileInteractiveBtn.disabled=true;
     generateBtn.disabled=true;
     generateHtmlBtn.disabled=true;
     clearLog();
@@ -936,8 +942,64 @@
       generating=false;
       const permitted=Boolean(state.analysis?.ok&&engineCatalog.canExportWithPreview(state.previewProfileId));
       singlefileResourceBtn.disabled=!permitted;
+      singlefileInteractiveBtn.disabled=!permitted;
       generateHtmlBtn.disabled=!permitted;
       generateBtn.disabled=!permitted;
+    }
+  }
+
+  // Lot 8.3a : essai interactif monofichier. Ne remplace pas l'export HTML
+  // multifichier qualifie ; echec explicite en cas de limite ou de ressource absente.
+  async function generateSinglefileInteractiveTrial(){
+    if(generating || !state.zip || !state.analysis?.ok)return;
+    if(!engineCatalog.canExportWithPreview(state.previewProfileId)){
+      logLine('Monofichier expérimental : utiliser le moteur de référence 3.8.2.');return;
+    }
+    if(!modules.htmlSinglefilePlayer?.render){
+      logLine('Module HTML monofichier manquant. Utilisez le HTML multifichier.');return;
+    }
+    generating=true;
+    for(const b of [singlefileInteractiveBtn,singlefileResourceBtn,generateBtn,generateHtmlBtn]) b.disabled=true;
+    clearLog();resetGenerationProgress();
+    try{
+      setGenerationProgress(3,'Préparation du monofichier expérimental');
+      logLine('ESSAI NON QUALIFIÉ : testez le fichier avant diffusion. Le HTML multifichier reste la solution de référence.');
+      const out=new JSZip();
+      const title=el('courseTitle').value.trim()||state.analysis.h5pJson?.title||'Activité H5P';
+      const language=state.analysis.language.selected;
+      const localized=await localizeContent(state.zip,state.analysis);
+      const metadata=cloneJson(state.analysis.h5pJson);metadata.language=language;
+      setGenerationProgress(10,'Copie du contenu H5P');
+      await modules.portablePackage.copyH5p({sourceZip:state.zip,targetZip:out,h5pJson:metadata,contentJson:localized.content,safePath:safeZipPath});
+      setGenerationProgress(18,'Intégration du lecteur H5P');
+      await fetchPlayerDist(out);
+      const css=[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n');
+      out.file('custom/custom.css',css||'/* Aucun style personnalisé */\n');
+      setGenerationProgress(40,'Intégration des ressources locales');
+      const bundle=await modules.htmlSinglefileResources.collect({
+        files:out.files,
+        onProgress:({percent})=>setGenerationProgress(40+Math.round(percent*0.45),'Intégration des ressources locales')
+      });
+      setGenerationProgress(88,'Assemblage du document interactif');
+      const html=modules.htmlSinglefilePlayer.render({
+        bundle,title,language,translations:coreTranslationsFor(language),
+        layoutCss:exportLayout.css(selectedLayout())
+      });
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const link=document.createElement('a');const url=URL.createObjectURL(blob);
+      link.href=url;link.download=`${cleanFilename(state.file.name)}-html-monofichier-ESSAI.html`;
+      document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setGenerationProgress(100,'Terminé (essai non qualifié)');
+      logLine(`Essai HTML unique généré : ${bundle.fileCount} ressources, ${(bundle.totalBytes/1048576).toFixed(2)} Mio. Tester l'activité complète et les médias avant toute diffusion.`);
+      logLine('Si le document affiche un message d’erreur ou des médias incomplets, réexporter au format HTML multifichier.');
+    }catch(error){
+      console.error(error);setGenerationProgress(generationProgress.value,'Refus du monofichier expérimental');
+      logLine(`Monofichier non généré : ${error.message}. Solution disponible : HTML multifichier.`);
+    }finally{
+      generating=false;
+      const permitted=Boolean(state.analysis?.ok&&engineCatalog.canExportWithPreview(state.previewProfileId));
+      for(const b of [singlefileInteractiveBtn,singlefileResourceBtn,generateBtn,generateHtmlBtn])b.disabled=!permitted;
     }
   }
 
@@ -1022,6 +1084,7 @@
     state.analysis = null;
     singlefileDiagnosticBtn.disabled = true;
     singlefileResourceBtn.disabled = true;
+    singlefileInteractiveBtn.disabled = true;
     state.previewProfileId = RUNTIME_PROFILE_ID;
     state.qualificationSessions.clear();
     generateBtn.disabled = true;
@@ -1164,4 +1227,5 @@
   generateHtmlBtn.addEventListener('click', generateHtmlMultifile);
   singlefileDiagnosticBtn.addEventListener('click',downloadSinglefilePreflight);
   singlefileResourceBtn.addEventListener('click',downloadSinglefileResourcePrototype);
+  singlefileInteractiveBtn.addEventListener('click',generateSinglefileInteractiveTrial);
 })();

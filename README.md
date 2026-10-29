@@ -14,9 +14,17 @@ Le bouton **« Générer le HTML multifichier »** produit un ZIP autonome avec 
 
 Après extraction, publier **tout le contenu** de l'archive sous une URL HTTP(S) statique, éventuellement dans un sous-répertoire. L'application générée ne requiert ni backend ni CDN à la lecture. Elle peut être importée comme mini-site dans Moodle via une ressource « Fichier » si Moodle autorise les scripts et les ressources internes du ZIP. Décompresser les fichiers et définir `index.html` comme fichier principal.
 
-Le format HTML simple ne fournit aucun suivi SCORM, aucune note LMS ni reprise LMS. Les ressources externes demandées par certains contenus H5P, notamment YouTube, peuvent nécessiter un accès réseau et des autorisations spécifiques. L'exécution `file://` n'est pas garantie. La version HTML monofichier et la conversion par lots restent à développer.
+Le format HTML simple ne fournit aucun suivi SCORM, aucune note LMS ni reprise LMS. Les ressources externes demandées par certains contenus H5P, notamment YouTube, peuvent nécessiter un accès réseau et des autorisations spécifiques. L'exécution `file://` n'est pas garantie pour le format multifichier. Le lot 8.3a ajoute un **essai HTML monofichier interactif**, distinct des formats validés : il intègre ses ressources et exécute le lecteur dans un document unique. Ce prototype fonctionne en contexte Chromium contrôlé sur H5P.AdvancedText et l'écran d'accueil/une étape de Game Map. Son ouverture `file://`, son déploiement HTTP(S) et les activités composites complètes ne sont pas encore certifiés. En cas de limite ou d'échec, utiliser le HTML multifichier. La conversion par lots reste à développer.
 
 Documentation et recette : `docs/LOT7_HTML_MULTIFICHIER.md` et `docs/CONTRE_RECETTE_LOT7.md`.
+
+## Lot 8.3a : HTML monofichier interactif, essai non qualifié
+
+Le bouton « HTML monofichier interactif (essai) » génère un fichier `.html` contenant les ressources H5P, les bibliothèques et le lecteur 3.8.2. Un résolveur embarqué traite les requêtes fetch/XHR, les scripts, le CSS et plusieurs catégories de médias. Le CSS personnalisé et les marges ordinateur/mobile sont appliqués au document.
+
+**Ce format est expérimental**, sans garantie de portabilité complète pour toutes les bibliothèques H5P, les vidéos externes, les iframes et les politiques de sécurité des hébergeurs. Un volume décompressé supérieur à 32 Mio est refusé. Les diagnostics internes sont disponibles avec `window.H5PConverterSinglefileAudit()` dans le HTML produit. Le lecteur peut indiquer une erreur et recommander l'HTML multifichier.
+
+La génération monofichier n'envoie aucun score SCORM ou LMS. Les essais Chromium utilisent un document injecté dans un contexte navigateur, **et ne constituent pas une certification `file://` ou HTTP(S)**. Consulter `docs/LOT8_3_PREMIER_LECTEUR_MONOFICHIER.md` et `docs/CONTRE_RECETTE_LOT8_3.md`.
 
 ## Fonctionnalités de la V1
 

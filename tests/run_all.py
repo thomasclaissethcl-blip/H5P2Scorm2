@@ -68,6 +68,8 @@ def main() -> int:
         ("conteneur-ressources-8-2", [node, "tests/html-singlefile-resources82.mjs"] if node else None),
         ("correction-prototype-8-2b", [node, "tests/html-singlefile-resources82b.mjs"] if node else None),
         ("progression-prototype-8-2c", [node, "tests/singlefile-progress82c.mjs"] if node else None),
+        ("prototype-interactif-monofichier-8-3", [node, "tests/html-singlefile-player83.mjs"] if node else None),
+        ("syntaxe-lecteur-monofichier-8-3", [node, "--check", "src/html-singlefile-player.js"] if node else None),
         ("syntaxe-conteneur-ressources-8-2", [node, "--check", "src/html-singlefile-resources.js"] if node else None),
         ("pre-diagnostic-monofichier-8-1", [node, "tests/html-singlefile-preflight81.mjs"] if node else None),
         ("syntaxe-module-presentation", [node, "--check", "src/export-layout.js"] if node else None),
@@ -100,7 +102,7 @@ def main() -> int:
     report = {
         "schema_version": 1,
         "date_utc": datetime.now(timezone.utc).isoformat(),
-        "scope": "Correctif 7d et lot 8.2 : marges par breakpoint et conteneur prototype de ressources monofichier",
+        "scope": "Lot 8.3a : essai HTML monofichier interactif, sans validation file:// ni qualification universelle",
         "python": platform.python_version(),
         "node": None,
         "summary": {"passed": success, "failed": len(results) - success, "total": len(results)},
