@@ -46,7 +46,7 @@
 
       <div class="grid two">
         <div class="field">
-          <label for="cssFile">Fichier CSS facultatif <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le fichier CSS" data-help="Importez un fichier .css si votre charte existe déjà. Son contenu sera intégré dans le SCORM généré.">?</button></label>
+          <label for="cssFile">Fichier CSS facultatif <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le fichier CSS" data-help="Importez un fichier .css si votre charte existe déjà. Son contenu sera intégré dans les exports SCORM et HTML.">?</button></label>
           <input id="cssFile" type="file" accept=".css,text/css">
         </div>
         <div class="field-note">
@@ -54,6 +54,18 @@
           <span>Les styles personnalisés sont chargés en dernier pour faciliter les surcharges.</span>
         </div>
       </div>
+
+      <div class="grid two">
+        <div class="field">
+          <label for="layoutMaxWidth">Largeur maximale du contenu (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la largeur du contenu" data-help="Largeur maximale du conteneur H5P dans les exports SCORM et HTML. Le contenu est centré automatiquement ; sur les petits écrans, sa largeur diminue pour rester visible. Laissez vide pour utiliser toute la largeur disponible.">?</button></label>
+          <input id="layoutMaxWidth" type="number" min="1" max="10000" step="1" inputmode="numeric" placeholder="Automatique, ex. 960">
+        </div>
+        <div class="field">
+          <label for="layoutMargin">Marges autour du contenu (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les marges" data-help="Espace de même taille en haut, en bas, à gauche et à droite du contenu exporté. Saisissez 0 pour supprimer les marges, ou laissez vide pour conserver la présentation d'origine. Ne modifie pas le mode plein écran natif.">?</button></label>
+          <input id="layoutMargin" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Automatique, ex. 24">
+        </div>
+      </div>
+      <p class="muted">Réglages facultatifs communs aux exports SCORM et HTML. Les champs vides conservent l’affichage actuel. La largeur reste responsive et le plein écran natif n’est pas limité. La visionneuse de contrôle conserve sa propre mise en page.</p>
 
       <div class="field">
         <label for="cssText">CSS intégré <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le CSS intégré" data-help="Ajoutez ou modifiez ici des règles CSS. Elles s'ajoutent au fichier CSS éventuellement importé. Laissez vide si aucune surcouche n'est souhaitée.">?</button></label>
@@ -226,6 +238,7 @@
   <script src="src/player-assets.js"></script>
   <script src="src/portable-package.js"></script>
   <script src="src/html-multifile.js"></script>
+  <script src="src/export-layout.js"></script>
   <script src="src/engine-qualification.js"></script>
   <script src="src/scorm-scoring.js"></script>
   <script src="src/scorm-score-plan.js"></script>

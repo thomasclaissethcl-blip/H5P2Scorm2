@@ -61,6 +61,8 @@ def main() -> int:
         ("ressources-lecteur-partagees", [node, "tests/player-assets6.mjs"] if node else None),
         ("copie-h5p-portable", [node, "tests/portable-package6.mjs"] if node else None),
         ("protection-composants-lot53", [sys.executable, "tests/verify_lot53_nonregression.py"]),
+        ("parametres-css-export-7b", [node, "tests/export-layout7b.mjs"] if node else None),
+        ("syntaxe-module-presentation", [node, "--check", "src/export-layout.js"] if node else None),
         ("lanceur-html-multifichier", [node, "tests/html-multifile7.mjs"] if node else None),
         ("syntaxe-module-html", [node, "--check", "src/html-multifile.js"] if node else None),
         ("archive-source", [sys.executable, "tests/verify_baseline_archive.py"]),
@@ -89,7 +91,7 @@ def main() -> int:
     report = {
         "schema_version": 1,
         "date_utc": datetime.now(timezone.utc).isoformat(),
-        "scope": "Lot 7 : HTML multifichier sans SCORM, moteur commun 6.1 et non-régression 5.3",
+        "scope": "Lot 7b : réglages de largeur et marges dans les exports SCORM et HTML, non-régression lot 7",
         "python": platform.python_version(),
         "node": None,
         "summary": {"passed": success, "failed": len(results) - success, "total": len(results)},

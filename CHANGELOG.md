@@ -87,3 +87,9 @@ Première version stable centrée sur Moodle et SCORM 1.2.
 - Protection contre le double comptage des questions internes et contre les sous-scores inattendus.
 - Contrainte de portée pour le registre de reprise des sous-scores imbriqués.
 - Agrégation toujours facultative, score global natif toujours prioritaire et non-régression du lecteur de référence.
+
+## 2026-10-28 : Correctif 7b, mise en page des exports
+- Champs facultatifs de largeur maximale (centrée et responsive) et de marges en px pour SCORM et HTML multifichier.
+- Validation stricte des valeurs, sortie inchangée avec les champs vides.
+- Module partagé `src/export-layout.js` et nouveaux contrôles automatisés.
+- Aucune modification des moteurs, de la visionneuse, du suivi SCORM et de la notation.

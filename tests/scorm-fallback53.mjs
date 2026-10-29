@@ -8,7 +8,7 @@ const fixture = JSON.parse(fs.readFileSync('tests/fixtures/interactive-book-scor
 const content = fs.readFileSync('app.js','utf8').replace(/\}\)\(\);\s*$/, 'globalThis.__bridgeSource=bridgeSource;\n})();');
 const app = vm.createContext({console,navigator:{language:'fr'},document:{getElementById(){return {value:'',addEventListener(){}}}},setTimeout,clearTimeout,setInterval,clearInterval});
 app.window=app;app.globalThis=app;app.addEventListener=()=>{};
-for (const file of ['src/runtime-profiles.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js']) vm.runInContext(fs.readFileSync(file,'utf8'),app,{filename:file});
+for (const file of ['src/runtime-profiles.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/export-layout.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js']) vm.runInContext(fs.readFileSync(file,'utf8'),app,{filename:file});
 vm.runInContext(content,app);
 const plan={enabled:true,expectedSubContentIds:fixture.expectedSubContentIds,ignoredNestedSubContentIds:fixture.ignoredNestedSubContentIds};
 assert.equal(plan.expectedSubContentIds.length,7);

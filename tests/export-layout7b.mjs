@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const context=vm.createContext({console});context.globalThis=context;
+vm.runInContext(fs.readFileSync('src/export-layout.js','utf8'),context);
+vm.runInContext(fs.readFileSync('src/html-multifile.js','utf8'),context);
+const {exportLayout:layout,htmlMultifile:html}=context.H5PConverterModules;
+const norm=v=>JSON.parse(JSON.stringify(layout.normalize(v)));
+assert.deepEqual(norm({maxWidthPx:'',marginPx:''}),{maxWidthPx:null,marginPx:null});
+assert.equal(layout.css(norm({maxWidthPx:'',marginPx:''})), '');
+assert.deepEqual(norm({maxWidthPx:'0960',marginPx:'0'}),{maxWidthPx:960,marginPx:0});
+const options=norm({maxWidthPx:'960',marginPx:'24'});
+const css=layout.css(options);
+assert.match(css,/body\{box-sizing:border-box;padding:24px;\}/);
+assert.match(css,/#h5p-container,#runtime-error,#runtime-status\{[^}]*width:100%;max-width:960px;margin-left:auto;margin-right:auto;/);
+assert.match(css,/:fullscreen\{max-width:none!important/);
+assert.ok(!css.includes('.h5p-content'));
+for (const malformed of ['-5','0','1.5','10px','1e3','500;body{display:none}','Infinity','1 2','10001','1.0'])
+ assert.throws(()=>layout.normalize({maxWidthPx:malformed,marginPx:''}),/Largeur maximale/);
+for (const malformed of ['-1','2001','3.5','0px','url(https://example.org)'])
+ assert.throws(()=>layout.normalize({maxWidthPx:'',marginPx:malformed}),/Marges/);
+assert.equal(layout.normalize({maxWidthPx:1,marginPx:2000}).marginPx,2000);
+assert.match(layout.css({maxWidthPx:960,marginPx:null}),/max-width:960px/);
+assert.ok(!layout.css({maxWidthPx:null,marginPx:16}).includes('max-width:960px'));
+assert.ok(!html.indexHtml({title:'T',language:'fr'}).includes('Presentation du conteneur'));
+const page=html.indexHtml({title:'T',language:'fr',layoutCss:css});
+assert.match(page,/padding:24px/);
+assert.match(page,/max-width:960px/);
+assert.match(page,/src="\.\/html\/player-init\.js"/);
+assert.ok(!page.includes('scorm12.js'));
+console.log('Lot 7b : validation, valeurs par defaut, securite CSS, fullscreen, HTML : OK');

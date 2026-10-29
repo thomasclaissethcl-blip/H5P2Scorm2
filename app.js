@@ -3,7 +3,7 @@
 
   const APP_VERSION = '1.0.1';
   const modules = globalThis.H5PConverterModules;
-  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage || !modules?.htmlMultifile) {
+  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage || !modules?.htmlMultifile || !modules?.exportLayout) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
   const engineCatalog = modules.engineCatalog;
@@ -15,6 +15,10 @@
   const STRICT_SUSPEND_DATA_LIMIT = 4000;
   const MOODLE_EXTENDED_SUSPEND_DATA_LIMIT = 64000;
   const playerAssets = modules.playerAssets;
+  const exportLayout = modules.exportLayout;
+  function selectedLayout(){
+    return exportLayout.normalize({maxWidthPx:el('layoutMaxWidth').value,marginPx:el('layoutMargin').value});
+  }
   const PLAYER_CDN = `https://cdn.jsdelivr.net/npm/h5p-standalone@${PLAYER_VERSION}`;
   const PLAYER_DIST_FILES = playerAssets.paths;
 
@@ -676,10 +680,10 @@
       const restored=restoreUserData(payload);\n      return restored;\n    }catch(error){\n      console.warn(error);\n      setRuntimeMessage('La progression précédente n’a pas pu être restaurée. L’activité reste utilisable.',true);\n      return null;\n    }\n  }\n  async function saveState(reason){\n    if(!enableResume || closing) return false;\n    const records=captureUserData();\n    const scoreTrackerState=scoreTracker.snapshot();\n    if(!records && !scoreTrackerState) return false;\n    const payload={v:1,records:records||[]};\n    if(scoreTrackerState) payload.scoreTracker=scoreTrackerState;\n    // Deux compressions asynchrones peuvent finir dans le desordre. Seule\n    // la plus recente a le droit de remplacer l'etat de suspension.\n    const request=++saveStateRequest;\n    const packed=await packState(payload);\n    if(closing || request!==saveStateRequest) return false;\n    if(!packed.value){\n      setRuntimeMessage('La progression actuelle est trop volumineuse pour SCORM 1.2 ('+packed.length+' caractères après optimisation, limite '+suspendLimit+'). Le dernier état sauvegardable est conservé.');\n      console.warn('suspend_data overflow',reason,packed);\n      return false;\n    }\n    if(!SCORM12.set('cmi.suspend_data',packed.value)){\n      setRuntimeMessage('Le LMS a refusé l’écriture de cmi.suspend_data.'+scormErrorText(),true);\n      return false;\n    }\n    if(!SCORM12.commit()){\n      setRuntimeMessage('Le LMS a refusé la validation de la progression.'+scormErrorText(),true);\n      return false;\n    }\n    lastPackedState=packed.value;\n    setRuntimeMessage('');\n    return true;\n  }\n  function saveStateSync(){\n    if(!enableResume) return;\n    const records=captureUserData();\n    const scoreTrackerState=scoreTracker.snapshot();\n    if(records || scoreTrackerState){\n      const payload={v:1,records:records||[]};\n      if(scoreTrackerState) payload.scoreTracker=scoreTrackerState;\n      const raw=RAW_PREFIX+JSON.stringify(payload);\n      if(raw.length<=suspendLimit){\n        lastPackedState=raw;\n        SCORM12.set('cmi.suspend_data',raw);\n        SCORM12.commit();\n        return;\n      }\n    }\n    if(lastPackedState){\n      SCORM12.set('cmi.suspend_data',lastPackedState);\n      SCORM12.commit();\n    }\n  }\n  function closeSession(){\n    if(closing) return;\n    closing=true;\n    if(firstSaveTimer) clearTimeout(firstSaveTimer);\n    if(saveTimer) clearInterval(saveTimer);\n    saveStateSync();\n    SCORM12.finish();\n  }\n\n  async function boot(){\n    document.documentElement.lang=runtimeLanguage||'en';\n    SCORM12.init();\n    const restored=await loadState();\n    const options={\n      id:contentId,\n      h5pJsonPath:'./h5p',\n      contentJsonPath:'./h5p/content',\n      librariesPath:'./h5p',\n      frameJs:'./player/frame.bundle.js',\n      frameCss:'./player/styles/h5p.css',\n      customCss:['./custom/custom.css'],\n      frame:false,\n      copyright:false,\n      export:false,\n      fullScreen:true,\n      reportingIsEnabled:true\n    };\n    if(runtimeTranslations) options.translations=runtimeTranslations;\n    if(enableResume){\n      options.saveFreq=saveFreq;\n      options.contentUserData=restored||{'0':{state:'{}'}};\n    }\n    const container=document.getElementById('h5p-container');\n    try{\n      await new H5PStandalone.H5P(container,options);\n      if(window.H5P && H5P.externalDispatcher){ H5P.externalDispatcher.on('xAPI',handle); }\n      if(enableResume){\n        firstSaveTimer=setTimeout(()=>{ void saveState('initial'); },1000);\n        saveTimer=setInterval(()=>{ void saveState('interval'); },Math.max(5,saveFreq)*1000);\n      }\n    }catch(error){\n      document.getElementById('runtime-error').textContent='Erreur H5P : '+error.message;\n      console.error(error);\n    }\n  }\n  window.addEventListener('pagehide',closeSession);\n  window.addEventListener('beforeunload',closeSession);\n  window.addEventListener('DOMContentLoaded',boot);\n})();\n`;
   }
 
-  function launchHtml(title, language) {
+  function launchHtml(title, language, layoutCss = '') {
     const safeTitle = escapeHtml(title);
     const safeLanguage = escapeHtml(language || 'en');
-    return `<!doctype html>\n<html lang="${safeLanguage}">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>${safeTitle}</title>\n<style>html,body{margin:0;padding:0;background:#fff}#h5p-container{width:100%}#runtime-error{font-family:Arial,sans-serif;color:#8a1f1f;padding:12px}#runtime-status{font-family:Arial,sans-serif;background:#fff5d8;border:1px solid #d3a33b;color:#5c450d;margin:10px;padding:10px 12px;border-radius:6px;font-size:14px;line-height:1.4}#runtime-status[hidden]{display:none}</style>\n</head>\n<body>\n<div id="runtime-error"></div>\n<div id="runtime-status" hidden></div>\n<div id="h5p-container"></div>\n<script src="./scorm/scorm12.js"></script>\n<script src="./player/main.bundle.js"></script>\n<script src="./scorm/h5p-scorm-bridge.js"></script>\n</body>\n</html>\n`;
+    return `<!doctype html>\n<html lang="${safeLanguage}">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>${safeTitle}</title>\n<style>html,body{margin:0;padding:0;background:#fff}#h5p-container{width:100%}#runtime-error{font-family:Arial,sans-serif;color:#8a1f1f;padding:12px}#runtime-status{font-family:Arial,sans-serif;background:#fff5d8;border:1px solid #d3a33b;color:#5c450d;margin:10px;padding:10px 12px;border-radius:6px;font-size:14px;line-height:1.4}#runtime-status[hidden]{display:none}${layoutCss ? "\n" + layoutCss : ""}</style>\n</head>\n<body>\n<div id="runtime-error"></div>\n<div id="runtime-status" hidden></div>\n<div id="h5p-container"></div>\n<script src="./scorm/scorm12.js"></script>\n<script src="./player/main.bundle.js"></script>\n<script src="./scorm/h5p-scorm-bridge.js"></script>\n</body>\n</html>\n`;
   }
 
   function xmlEscape(value) {
@@ -722,6 +726,8 @@
     clearLog();
     resetGenerationProgress();
     try {
+      const layout=selectedLayout();
+      const layoutCss=exportLayout.css(layout);
       const out = new JSZip();
       const title = el('courseTitle').value.trim() || state.analysis.h5pJson?.title || 'Activité H5P';
       const masteryScore = Math.max(0, Math.min(100, Number(el('masteryScore').value) || 0));
@@ -758,7 +764,7 @@
 
       const css = [state.importedCss, el('cssText').value].filter(Boolean).join('\n\n');
       out.file('custom/custom.css', css || '/* Aucun style personnalisé */\n');
-      out.file('index.html', launchHtml(title, language));
+      out.file('index.html', launchHtml(title, language, layoutCss));
       out.file('scorm/scorm12.js', scormApiSource(markIncomplete, enableResume));
       out.file('scorm/h5p-scorm-bridge.js', bridgeSource(masteryScore, language, statusPolicy, saveFreq, enableResume, showRuntimeWarnings, suspendLimit, state.analysis.h5pJson?.mainLibrary || '', scorePlan));
       out.file('localization-report.json', JSON.stringify(localized.stats, null, 2));
@@ -778,6 +784,7 @@
         title,
         language,
         mainLibrary: state.analysis.mainKey,
+        layout,
         statusPolicy,
         masteryScore: statusPolicy === 'completion' ? null : masteryScore,
         resume: {
@@ -848,6 +855,8 @@
     clearLog();
     resetGenerationProgress();
     try {
+      const layout=selectedLayout();
+      const layoutCss=exportLayout.css(layout);
       const out = new JSZip();
       const title = el('courseTitle').value.trim() || state.analysis.h5pJson?.title || 'Activité H5P';
       const language = state.analysis.language.selected;
@@ -867,13 +876,13 @@
       const css=[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n');
       const html = modules.htmlMultifile;
       out.file('custom/custom.css',css || '/* Aucun style personnalisé */\n');
-      out.file('index.html',html.indexHtml({title,language}));
+      out.file('index.html',html.indexHtml({title,language,layoutCss}));
       out.file('html/player-init.js',html.bootstrapSource({language,translations:coreTranslationsFor(language)}));
       out.file('localization-report.json',JSON.stringify(localized.stats,null,2));
       out.file('generation-report.json',JSON.stringify(html.generationReport({
         title,language,mainLibrary:state.analysis.mainKey,libraries:state.analysis.libraries,
         profileId:RUNTIME_PROFILE_ID,playerVersion:PLAYER_VERSION,coreApi:H5P_CORE_API_SUPPORTED,
-        localization:localized.stats,cssLength:new TextEncoder().encode(css).length
+        localization:localized.stats,cssLength:new TextEncoder().encode(css).length,layout
       }),null,2));
       out.file('README.txt',html.readme({title,language,playerVersion:PLAYER_VERSION}));
       // L'HTML simple n'a aucun manifest SCORM ni API de notation LMS.
