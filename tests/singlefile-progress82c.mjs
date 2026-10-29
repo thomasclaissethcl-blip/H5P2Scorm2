@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+
+const code=fs.readFileSync('src/html-singlefile-resources.js','utf8');
+const app=fs.readFileSync('app.js','utf8');
+const ctx=vm.createContext({btoa,Uint8Array,console});ctx.globalThis=ctx;
+vm.runInContext(code,ctx);
+const api=ctx.H5PConverterModules.htmlSinglefileResources;
+const files=Object.fromEntries(Array.from({length:207},(_,index)=>{
+  const contents=Buffer.from(`contenu-test-${index}`);
+  return [`h5p/content/item-${String(index).padStart(3,'0')}.txt`,{dir:false,_data:{uncompressedSize:contents.length},async:async()=>new Uint8Array(contents)}];
+}));
+const events=[];
+const bundle=await api.collect({files,onProgress:value=>events.push({...value})});
+assert.equal(bundle.fileCount,207);
+assert.ok(events.length>40&&events.length<=101,'Cadence non bornée du suivi');
+assert.equal(events.at(-1).completed,207);
+assert.equal(events.at(-1).percent,100);
+assert.ok(events.every(x=>x.total===207));
+assert.ok(events.every((x,i)=>i===0||x.completed>events[i-1].completed));
+assert.ok(events.every((x,i)=>i===0||x.percent>events[i-1].percent));
+assert.ok(events.every(x=>x.percent>0&&x.percent<=100));
+const zero=[];
+const empty=await api.collect({files:{},onProgress:p=>zero.push({...p})});
+assert.equal(empty.fileCount,0);
+assert.equal(zero.length,1);
+assert.equal(zero[0].percent,100);
+const errFiles={'h5p/content/first.txt':{dir:false,async:async()=>new Uint8Array([1])},'h5p/content/second.txt':{dir:false,async:async()=>{throw new Error('échec source');}}};
+await assert.rejects(()=>api.collect({files:errFiles,onProgress:()=>{}}),/échec source/);
+assert.match(app,/async function downloadSinglefileResourcePrototype\(\)/);
+const part=app.split('async function downloadSinglefileResourcePrototype()')[1].split('async function generateHtmlMultifile()')[0];
+assert.ok(part.includes('resetGenerationProgress();'),'Le suivi du prototype doit être réinitialisé');
+assert.ok(part.includes('onProgress:({percent})=>setGenerationProgress'),'Le suivi doit refléter le travail réel');
+assert.ok(part.includes("setGenerationProgress(100,'Terminé');"),'La génération réussie doit terminer la barre');
+assert.ok(part.includes("'Échec du prototype'"),'L’échec ne doit pas afficher 100 %');
+console.log('Prototype 8.2c : callbacks réels et bornés, progression monotone, finalisation 100 %, échecs explicites : OK');

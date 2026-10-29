@@ -50,11 +50,14 @@
     const out=stack.join('/');
     return safePath(out)?out:null;
   }
-  async function collect({files,maxBytes=LIMIT_BYTES,maxFiles=LIMIT_FILES}={}){
+  async function collect({files,maxBytes=LIMIT_BYTES,maxFiles=LIMIT_FILES,onProgress}={}){
     if(!files||typeof files!=='object')throw new TypeError('Fichiers source absents.');
     const paths=Object.keys(files).filter(path=>!files[path].dir).sort();
     if(paths.length>maxFiles)throw new Error(`Trop de ressources pour le prototype : ${paths.length}/${maxFiles}.`);
     let total=0;const records=Object.create(null);
+    const reportEvery=Math.max(1,Math.ceil(paths.length/100));
+    let completed=0;
+    if(typeof onProgress==='function'&&!paths.length)onProgress({completed:0,total:0,percent:100});
     for(const path of paths){
       if(!safePath(path))throw new Error(`Chemin de ressource non sûr : ${path}`);
       if(typeof files[path].async!=='function')throw new Error(`Entrée non lisible : ${path}`);
@@ -64,6 +67,12 @@
       total+=bytes.length;
       if(total>maxBytes)throw new Error('Prototype refusé : volume de ressources supérieur à 32 Mio.');
       records[path]={mime:mime(path),size:bytes.length,base64:base64(bytes)};
+      // Avancement reel (nombre de fichiers lus), limite a environ 100 mises a jour.
+      // La callback est facultative pour conserver le contrat existant.
+      completed++;
+      if(typeof onProgress==='function'&&(completed%reportEvery===0||completed===paths.length)){
+        onProgress({completed,total:paths.length,percent:100*completed/paths.length});
+      }
     }
     return Object.freeze({schemaVersion:1,kind:'resource-container-only',fileCount:paths.length,totalBytes:total,records});
   }

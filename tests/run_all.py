@@ -67,6 +67,7 @@ def main() -> int:
         ("marges-responsive-7d", [node, "tests/export-layout7d.mjs"] if node else None),
         ("conteneur-ressources-8-2", [node, "tests/html-singlefile-resources82.mjs"] if node else None),
         ("correction-prototype-8-2b", [node, "tests/html-singlefile-resources82b.mjs"] if node else None),
+        ("progression-prototype-8-2c", [node, "tests/singlefile-progress82c.mjs"] if node else None),
         ("syntaxe-conteneur-ressources-8-2", [node, "--check", "src/html-singlefile-resources.js"] if node else None),
         ("pre-diagnostic-monofichier-8-1", [node, "tests/html-singlefile-preflight81.mjs"] if node else None),
         ("syntaxe-module-presentation", [node, "--check", "src/export-layout.js"] if node else None),

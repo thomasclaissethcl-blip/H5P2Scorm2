@@ -889,23 +889,34 @@
     singlefileResourceBtn.disabled=true;
     generateBtn.disabled=true;
     generateHtmlBtn.disabled=true;
+    clearLog();
+    resetGenerationProgress();
     try{
-      clearLog();
+      setGenerationProgress(3,'Préparation du prototype');
       logLine('Construction du prototype de ressources : ce document ne lance PAS H5P.');
       const archive=new JSZip();
       const title=el('courseTitle').value.trim() || state.analysis.h5pJson?.title || 'Activite H5P';
       const language=state.analysis.language.selected;
+      setGenerationProgress(8,'Localisation du contenu');
       const localized=await localizeContent(state.zip,state.analysis);
       const metadata=cloneJson(state.analysis.h5pJson);
       metadata.language=language;
+      setGenerationProgress(12,'Copie des fichiers H5P');
       await modules.portablePackage.copyH5p({sourceZip:state.zip,targetZip:archive,h5pJson:metadata,contentJson:localized.content,safePath:safeZipPath});
+      setGenerationProgress(15,'Intégration du lecteur H5P');
       await fetchPlayerDist(archive);
       const css=[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n');
       archive.file('custom/custom.css',css || '/* Aucun style personnalise */\n');
       const html=modules.htmlMultifile;
       archive.file('html/player-init.js',html.bootstrapSource({language,translations:coreTranslationsFor(language)}));
-      const packaged=await modules.htmlSinglefileResources.collect({files:archive.files});
+      setGenerationProgress(40,'Intégration des ressources dans le HTML');
+      const packaged=await modules.htmlSinglefileResources.collect({
+        files:archive.files,
+        onProgress:({percent})=>setGenerationProgress(40+Math.round(percent*0.45),'Intégration des ressources dans le HTML')
+      });
+      setGenerationProgress(88,'Assemblage du document HTML');
       const output=modules.htmlSinglefileResources.render({title,bundle:packaged});
+      setGenerationProgress(95,'Téléchargement du prototype');
       const blob=new Blob([output],{type:'text/html;charset=utf-8'});
       const url=URL.createObjectURL(blob);
       const link=document.createElement('a');
@@ -914,10 +925,12 @@
       document.body.appendChild(link);
       link.click();link.remove();
       setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setGenerationProgress(100,'Terminé');
       logLine(`Prototype non interactif : ${packaged.fileCount} fichiers, ${packaged.totalBytes} octets embarques. Ouvrir le HTML localement pour lire le rapport de controle.`);
       logLine('Pour jouer l activite H5P, utiliser le HTML multifichier ou le SCORM.');
     }catch(error){
       console.error(error);
+      setGenerationProgress(generationProgress.value,'Échec du prototype');
       logLine(`Prototype non genere : ${error.message}`);
     }finally{
       generating=false;
