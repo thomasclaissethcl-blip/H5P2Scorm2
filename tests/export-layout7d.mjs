@@ -1,0 +1,21 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const ctx=vm.createContext({});ctx.globalThis=ctx;
+vm.runInContext(fs.readFileSync('src/export-layout.js','utf8'),ctx);
+const api=ctx.H5PConverterModules.exportLayout;
+const blank={maxWidthPx:'',marginTopPx:'',marginRightPx:'',marginBottomPx:'',marginLeftPx:'',mobileMarginTopPx:'',mobileMarginBottomPx:'',mobileMarginLeftPx:'',mobileMarginRightPx:''};
+const normalized=JSON.parse(JSON.stringify(api.normalize(blank)));
+for(const side of ['Top','Bottom','Left','Right'])assert.equal(normalized['mobileMargin'+side+'Px'],null);
+const css=api.css({...blank,maxWidthPx:'960',marginTopPx:'12',marginBottomPx:'48',marginLeftPx:'24',marginRightPx:'36',mobileMarginTopPx:'2',mobileMarginBottomPx:'6',mobileMarginLeftPx:'8',mobileMarginRightPx:'10'});
+assert.match(css,/body\{box-sizing:border-box;padding-top:12px;padding-right:min\(36px,49vw\);padding-bottom:48px;padding-left:min\(24px,49vw\);\}/);
+assert.match(css,/@media \(max-width:768px\)\{body\{box-sizing:border-box;padding-top:2px;padding-right:min\(10px,49vw\);padding-bottom:6px;padding-left:min\(8px,49vw\);\}\}/);
+const zero=api.css({...blank,marginTopPx:12,marginLeftPx:24});
+assert.match(zero,/@media \(max-width:768px\)\{body\{[^}]*padding-top:0px;[^}]*padding-left:min\(0px,49vw\)/);
+assert.ok(!api.css({maxWidthPx:null,marginTopPx:null,marginRightPx:null,marginBottomPx:null,marginLeftPx:null}).includes('@media'));
+for(const side of ['Top','Bottom','Left','Right'])for(const invalid of ['-1','2001','10em','NaN','1.5'])assert.throws(()=>api.normalize({...blank,['mobileMargin'+side+'Px']:invalid}),/Marge mobile/);
+// Conserver les contrats 7b et 7c avec leurs anciens appels.
+assert.equal(api.normalize({marginPx:32,maxWidthPx:null}).marginPx,32);
+assert.ok(!api.css({marginPx:32,maxWidthPx:null}).includes('@media'));
+const page=fs.readFileSync('index.html','utf8');
+for(const id of ['mobileMarginTop','mobileMarginRight','mobileMarginBottom','mobileMarginLeft'])assert.ok(page.includes('id="'+id+'"'));
+assert.ok(page.indexOf('src/html-singlefile-resources.js')<page.indexOf('src="app.js"'));
+console.log('Lot 7d : marges desktop/mobile, 768px, defaut mobile zero, retrocompatibilite, securite OK');

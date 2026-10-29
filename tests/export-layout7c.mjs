@@ -21,8 +21,8 @@ assert.match(css,/max-width:960px/);
 assert.match(css,/#h5p-container:fullscreen\{max-width:none!important/);
 assert.ok(!css.includes('.h5p-content'));
 const zero=layout.css({...blank,marginTopPx:'0'});
-assert.match(zero,/padding-top:0px/);assert.ok(!zero.includes('padding-right'));
-assert.equal(layout.css({...blank,marginLeftPx:'24'}).includes('padding-top'),false);
+assert.match(zero,/body\{[^}]*padding-top:0px/);assert.match(zero,/@media \(max-width:768px\)/);
+assert.ok(!layout.css({...blank,marginLeftPx:'24'}).match(/^body\{[^}]*padding-top/));
 assert.match(layout.css({...blank,maxWidthPx:'300'}),/max-width:300px/);
 for(const side of ['Top','Bottom','Left','Right']){
  for(const invalid of ['-1','2001','1.2','1e2','1px','Infinity','0;display:none'])

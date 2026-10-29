@@ -20,7 +20,7 @@ OUTPUT=Path(args.out);OUTPUT.mkdir(parents=True,exist_ok=True)
 JSZIP=Path(args.jszip)
 for path in [GAME,REFERENCE,JSZIP]:
     if not path.is_file():parser.error('Fichier introuvable : '+str(path))
-SCRIPTS=['src/runtime-profiles.js','src/engine-catalog.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/export-layout.js','src/html-singlefile-preflight.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','src/youtube-preview.js','app.js']
+SCRIPTS=['src/runtime-profiles.js','src/engine-catalog.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/export-layout.js','src/html-singlefile-preflight.js','src/html-singlefile-resources.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','src/youtube-preview.js','app.js']
 with zipfile.ZipFile(REFERENCE) as reference:
     dist={item.filename:reference.read(item.filename) for item in reference.infolist() if item.filename.startswith('player/') and not item.is_dir()}
 print('Player local dist:',len(dist), 'files',flush=True)

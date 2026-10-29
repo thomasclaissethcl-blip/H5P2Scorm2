@@ -3,7 +3,7 @@
 
   const APP_VERSION = '1.0.1';
   const modules = globalThis.H5PConverterModules;
-  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage || !modules?.htmlMultifile || !modules?.exportLayout || !modules?.htmlSinglefilePreflight) {
+  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage || !modules?.htmlMultifile || !modules?.exportLayout || !modules?.htmlSinglefilePreflight || !modules?.htmlSinglefileResources) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
   const engineCatalog = modules.engineCatalog;
@@ -17,7 +17,7 @@
   const playerAssets = modules.playerAssets;
   const exportLayout = modules.exportLayout;
   function selectedLayout(){
-    return exportLayout.normalize({maxWidthPx:el('layoutMaxWidth').value,marginTopPx:el('layoutMarginTop').value,marginBottomPx:el('layoutMarginBottom').value,marginLeftPx:el('layoutMarginLeft').value,marginRightPx:el('layoutMarginRight').value});
+    return exportLayout.normalize({maxWidthPx:el('layoutMaxWidth').value,marginTopPx:el('layoutMarginTop').value,marginBottomPx:el('layoutMarginBottom').value,marginLeftPx:el('layoutMarginLeft').value,marginRightPx:el('layoutMarginRight').value,mobileMarginTopPx:el('mobileMarginTop').value,mobileMarginBottomPx:el('mobileMarginBottom').value,mobileMarginLeftPx:el('mobileMarginLeft').value,mobileMarginRightPx:el('mobileMarginRight').value});
   }
   const PLAYER_CDN = `https://cdn.jsdelivr.net/npm/h5p-standalone@${PLAYER_VERSION}`;
   const PLAYER_DIST_FILES = playerAssets.paths;
@@ -112,6 +112,7 @@
   const generateBtn = el('generateBtn');
   const generateHtmlBtn = el('generateHtmlBtn');
   const singlefileDiagnosticBtn=el('singlefileDiagnosticBtn');
+  const singlefileResourceBtn=el('singlefileResourceBtn');
   let generating = false;
   const diagnostic = el('diagnostic');
   const log = el('log');
@@ -455,6 +456,7 @@
     state.previewProfileId = profile.id;
     generateBtn.disabled = !engineCatalog.canExportWithPreview(profile.id);
     generateHtmlBtn.disabled = generateBtn.disabled;
+    singlefileResourceBtn.disabled = generateBtn.disabled;
     const notice = diagnostic.querySelector('#previewEngineNotice');
     if (notice) notice.textContent = engineCatalog.canExportWithPreview(profile.id)
       ? 'Lecteur de référence : export SCORM autorisé si le H5P est valide.'
@@ -512,6 +514,7 @@
       state.analysis = await analyzeH5P(state.zip);
       renderDiagnostic(state.analysis);
       singlefileDiagnosticBtn.disabled = false;
+      singlefileResourceBtn.disabled = !state.analysis.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
       generateBtn.disabled = !state.analysis.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
       generateHtmlBtn.disabled = generateBtn.disabled;
       if (state.analysis.ok) {
@@ -524,6 +527,7 @@
       state.zip = null;
       state.analysis = null;
       singlefileDiagnosticBtn.disabled = true;
+      singlefileResourceBtn.disabled = true;
       diagnostic.className = 'diagnostic status-error';
       diagnostic.textContent = `Impossible de lire l’archive : ${error.message}`;
       logLine(`Erreur : ${error.message}`);
@@ -873,6 +877,57 @@
     }
   }
 
+  // Lot 8.2 : preuve de conteneur unique, sans execution du runtime H5P.
+  // Aucune API de generation HTML monofichier interactif n'est exposee.
+  async function downloadSinglefileResourcePrototype(){
+    if(generating || !state.zip || !state.analysis?.ok) return;
+    if(!engineCatalog.canExportWithPreview(state.previewProfileId)){
+      logLine('Prototype interdit : revenir au moteur qualifie 3.8.2.');
+      return;
+    }
+    generating=true;
+    singlefileResourceBtn.disabled=true;
+    generateBtn.disabled=true;
+    generateHtmlBtn.disabled=true;
+    try{
+      clearLog();
+      logLine('Construction du prototype de ressources : ce document ne lance PAS H5P.');
+      const archive=new JSZip();
+      const title=el('courseTitle').value.trim() || state.analysis.h5pJson?.title || 'Activite H5P';
+      const language=state.analysis.language.selected;
+      const localized=await localizeContent(state.zip,state.analysis);
+      const metadata=cloneJson(state.analysis.h5pJson);
+      metadata.language=language;
+      await modules.portablePackage.copyH5p({sourceZip:state.zip,targetZip:archive,h5pJson:metadata,contentJson:localized.content,safePath:safeZipPath});
+      await fetchPlayerDist(archive);
+      const css=[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n');
+      archive.file('custom/custom.css',css || '/* Aucun style personnalise */\n');
+      const html=modules.htmlMultifile;
+      archive.file('html/player-init.js',html.bootstrapSource({language,translations:coreTranslationsFor(language)}));
+      const packaged=await modules.htmlSinglefileResources.collect({files:archive.files});
+      const output=modules.htmlSinglefileResources.render({title,bundle:packaged});
+      const blob=new Blob([output],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;
+      link.download=`${cleanFilename(state.file.name)}-prototype-ressources-non-interactif.html`;
+      document.body.appendChild(link);
+      link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      logLine(`Prototype non interactif : ${packaged.fileCount} fichiers, ${packaged.totalBytes} octets embarques. Ouvrir le HTML localement pour lire le rapport de controle.`);
+      logLine('Pour jouer l activite H5P, utiliser le HTML multifichier ou le SCORM.');
+    }catch(error){
+      console.error(error);
+      logLine(`Prototype non genere : ${error.message}`);
+    }finally{
+      generating=false;
+      const permitted=Boolean(state.analysis?.ok&&engineCatalog.canExportWithPreview(state.previewProfileId));
+      singlefileResourceBtn.disabled=!permitted;
+      generateHtmlBtn.disabled=!permitted;
+      generateBtn.disabled=!permitted;
+    }
+  }
+
   // Lot 7 : le HTML et le SCORM partagent les ressources, mais pas les lanceurs.
   async function generateHtmlMultifile() {
     if (generating || !state.analysis?.ok || !state.zip) return;
@@ -953,6 +1008,7 @@
     state.zip = null;
     state.analysis = null;
     singlefileDiagnosticBtn.disabled = true;
+    singlefileResourceBtn.disabled = true;
     state.previewProfileId = RUNTIME_PROFILE_ID;
     state.qualificationSessions.clear();
     generateBtn.disabled = true;
@@ -1094,4 +1150,5 @@
   generateBtn.addEventListener('click', generateScorm);
   generateHtmlBtn.addEventListener('click', generateHtmlMultifile);
   singlefileDiagnosticBtn.addEventListener('click',downloadSinglefilePreflight);
+  singlefileResourceBtn.addEventListener('click',downloadSinglefileResourcePrototype);
 })();

@@ -64,6 +64,9 @@ def main() -> int:
         ("css-grille-7c-delta-autorise", [sys.executable, "tests/verify_styles_7c.py"]),
         ("parametres-css-export-7b", [node, "tests/export-layout7b.mjs"] if node else None),
         ("quatre-marges-independantes-7c", [node, "tests/export-layout7c.mjs"] if node else None),
+        ("marges-responsive-7d", [node, "tests/export-layout7d.mjs"] if node else None),
+        ("conteneur-ressources-8-2", [node, "tests/html-singlefile-resources82.mjs"] if node else None),
+        ("syntaxe-conteneur-ressources-8-2", [node, "--check", "src/html-singlefile-resources.js"] if node else None),
         ("pre-diagnostic-monofichier-8-1", [node, "tests/html-singlefile-preflight81.mjs"] if node else None),
         ("syntaxe-module-presentation", [node, "--check", "src/export-layout.js"] if node else None),
         ("syntaxe-pre-diagnostic-monofichier", [node, "--check", "src/html-singlefile-preflight.js"] if node else None),
@@ -95,7 +98,7 @@ def main() -> int:
     report = {
         "schema_version": 1,
         "date_utc": datetime.now(timezone.utc).isoformat(),
-        "scope": "Lot 7c et lot 8.1 : quatre marges indépendantes SCORM/HTML, pré-diagnostic statique HTML monofichier",
+        "scope": "Correctif 7d et lot 8.2 : marges par breakpoint et conteneur prototype de ressources monofichier",
         "python": platform.python_version(),
         "node": None,
         "summary": {"passed": success, "failed": len(results) - success, "total": len(results)},

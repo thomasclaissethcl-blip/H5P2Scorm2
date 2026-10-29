@@ -1,5 +1,14 @@
 # Changelog
 
+## Correctif 7d et lot 8.2 (version applicative maintenue à 1.0.1)
+
+- Quatre marges ordinateur, quatre marges mobile (media query 768 px), marges mobile à zéro par défaut. Export SCORM et HTML multifichier sans modification des composants internes H5P.
+- Contrat rétrocompatible des marges 7b et 7c ; réglages nouveaux présents dans les rapports de génération.
+- Module borné `src/html-singlefile-resources.js` : inventaire et encodage binaire, résolution de chemins locaux et URL CSS, prototype HTML à ressources intégrées.
+- Bouton `Prototype ressources (non interactif)` : télécharge une preuve technique, ne lance ni n'exporte d'activité H5P interactive. Monofichier opérationnel toujours non qualifié.
+- 44 contrôles automatisés, tests de rendu responsive Chromium et prototype de ressources exécuté en contexte navigateur ; navigation directe `file://` et publication HTTP(S) non validées dans l'environnement de test.
+
+
 ## Lot 7 : export HTML multifichier (version applicative maintenue à 1.0.1)
 
 - Ajout de l'export ZIP HTML multifichier portable pour hébergement statique HTTP(S) et sous-répertoires.

@@ -61,7 +61,7 @@
           <input id="layoutMaxWidth" type="number" min="1" max="10000" step="1" inputmode="numeric" placeholder="Automatique, ex. 960">
         </div>
         <div class="field-note">
-          <div class="field-note-title">Marges indépendantes</div>
+          <div class="field-note-title">Marges ordinateur (à partir de 769 px)</div>
           <span>Réglez séparément le haut, le bas, la gauche et la droite. Un champ vide laisse ce côté inchangé ; 0 supprime l'espace ajouté.</span>
         </div>
       </div>
@@ -71,7 +71,14 @@
         <div class="field"><label for="layoutMarginLeft">Marge gauche (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge gauche" data-help="Espace à gauche du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive.">?</button></label><input id="layoutMarginLeft" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 24"></div>
         <div class="field"><label for="layoutMarginRight">Marge droite (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge droite" data-help="Espace à droite du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive.">?</button></label><input id="layoutMarginRight" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 24"></div>
       </div>
-      <p class="muted">Réglages facultatifs communs aux exports SCORM et HTML. Un champ vide n’ajoute aucune marge pour ce côté. La largeur maximale entraîne le centrage automatique ; sur écran étroit, les marges latérales sont limitées pour éviter un débordement. Le plein écran natif est préservé.</p>
+      <div class="field-note" style="margin-top:16px"><div class="field-note-title">Marges mobile (768 px et moins)</div><span>Les marges ordinateur sont remplacées par ces quatre valeurs sur écran étroit. Par défaut : 0 px de chaque côté. Un champ mobile vide vaut également 0.</span></div>
+      <div class="grid four">
+        <div class="field"><label for="mobileMarginTop">Marge haute mobile (px)</label><input id="mobileMarginTop" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="mobileMarginBottom">Marge basse mobile (px)</label><input id="mobileMarginBottom" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="mobileMarginLeft">Marge gauche mobile (px)</label><input id="mobileMarginLeft" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="mobileMarginRight">Marge droite mobile (px)</label><input id="mobileMarginRight" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <p class="muted">Réglages facultatifs communs aux exports SCORM et HTML. Les marges ordinateur sont appliquées à partir de 769 px ; les marges mobile s'appliquent jusqu'à 768 px et valent 0 par défaut. La largeur maximale reste commune et centrée. Le plein écran H5P reste indépendant.</p>
 
       <div class="field">
         <label for="cssText">CSS intégré <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le CSS intégré" data-help="Ajoutez ou modifiez ici des règles CSS. Elles s'ajoutent au fichier CSS éventuellement importé. Laissez vide si aucune surcouche n'est souhaitée.">?</button></label>
@@ -205,11 +212,12 @@
         </div>
         <div class="preview-actions">
           <button id="singlefileDiagnosticBtn" type="button" disabled>Diagnostic HTML monofichier</button>
+          <button id="singlefileResourceBtn" type="button" disabled>Prototype ressources (non interactif)</button>
           <button id="generateHtmlBtn" type="button" disabled>Générer le HTML multifichier</button>
           <button id="generateBtn" type="button" disabled>Générer le SCORM</button>
         </div>
       </div>
-      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le diagnostic HTML monofichier télécharge un rapport de faisabilité, sans créer de fichier HTML non qualifié. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
+      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le diagnostic télécharge un rapport ; le prototype ressources produit un HTML unique de contrôle hors ligne, qui ne lance pas H5P. Ce n’est pas un export HTML monofichier interactif. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
       <div id="generationProgressWrap" class="generation-progress" hidden>
         <div class="generation-progress-head">
           <span id="generationProgressPhase">Génération</span>
@@ -247,6 +255,7 @@
   <script src="src/html-multifile.js"></script>
   <script src="src/export-layout.js"></script>
   <script src="src/html-singlefile-preflight.js"></script>
+  <script src="src/html-singlefile-resources.js"></script>
   <script src="src/engine-qualification.js"></script>
   <script src="src/scorm-scoring.js"></script>
   <script src="src/scorm-score-plan.js"></script>

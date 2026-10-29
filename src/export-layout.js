@@ -1,4 +1,4 @@
-/* Lot 7c : presentation des pages exportees SCORM, HTML multifichier.
+/* Lot 7d : presentation des pages exportees SCORM, HTML multifichier.
  * Champs independants haut / bas / gauche / droite. Aucun effet sur le H5P
  * lui-meme, le suivi LMS ou la visionneuse. L'ancien contrat marginPx
  * (lot 7b) reste accepte pour ne pas invalider les appels existants.
@@ -16,9 +16,12 @@
   function normalize(input={}){
     const maxWidthPx=dimension(input.maxWidthPx,{label:'Largeur maximale',min:1,max:10000});
     const sides=['Top','Right','Bottom','Left'];
+    const mobileSides=sides.some(side=>Object.prototype.hasOwnProperty.call(input,`mobileMargin${side}Px`));
     // Compatibilite des outils et rapports deja produits en 7b.
     if(!sides.some(side=>Object.prototype.hasOwnProperty.call(input,`margin${side}Px`))){
-      return Object.freeze({maxWidthPx,marginPx:dimension(input.marginPx,{label:'Marges',min:0,max:2000})});
+      const legacy={maxWidthPx,marginPx:dimension(input.marginPx,{label:'Marges',min:0,max:2000})};
+      if(mobileSides) for(const side of sides) legacy[`mobileMargin${side}Px`]=dimension(input[`mobileMargin${side}Px`],{label:`Marge mobile ${side.toLowerCase()}`,min:0,max:2000});
+      return Object.freeze(legacy);
     }
     const fallback=dimension(input.marginPx,{label:'Marges',min:0,max:2000});
     const result={maxWidthPx};
@@ -27,15 +30,22 @@
       const explicit=dimension(input[key],{label:`Marge ${({Top:'haute',Right:'droite',Bottom:'basse',Left:'gauche'})[side]}`,min:0,max:2000});
       result[key]=explicit===null?fallback:explicit;
     }
+    // Aucun champ mobile transmis : les exports 7c conservent leur contrat.
+    if(mobileSides){
+      for(const side of sides){
+        result[`mobileMargin${side}Px`]=dimension(input[`mobileMargin${side}Px`],{label:`Marge mobile ${side.toLowerCase()}`,min:0,max:2000});
+      }
+    }
     return Object.freeze(result);
   }
   function css(settings){
     const layout=normalize(settings);
     const fourSides=Object.prototype.hasOwnProperty.call(layout,'marginTopPx');
+    const mobileConfigured=['Top','Right','Bottom','Left'].some(side=>Object.prototype.hasOwnProperty.call(layout,`mobileMargin${side}Px`));
     const hasMargins=fourSides
       ? ['Top','Right','Bottom','Left'].some(side=>layout[`margin${side}Px`]!==null)
       : layout.marginPx!==null;
-    if(layout.maxWidthPx===null && !hasMargins) return '';
+    if(layout.maxWidthPx===null && !hasMargins && !mobileConfigured) return '';
     const rules=['/* Presentation du conteneur exporte : SCORM 1.2 et HTML multifichier. */'];
     if(fourSides && hasMargins){
       const sideCss={Top:'top',Right:'right',Bottom:'bottom',Left:'left'};
@@ -51,6 +61,17 @@
       rules.push(`body{${parts.join(';')};}`);
     } else if(hasMargins){
       rules.push(`body{box-sizing:border-box;padding:${layout.marginPx}px;}`);
+    }
+    // Sur mobile, neutraliser les marges desktop ; chaque champ mobile vide vaut 0.
+    // Un breakpoint de 768px couvre telephone et tablettes en mode etroit.
+    if(mobileConfigured || (fourSides && hasMargins)){
+      const parts=['box-sizing:border-box'];
+      for(const side of ['Top','Right','Bottom','Left']){
+        const value=mobileConfigured ? layout[`mobileMargin${side}Px`] : null;
+        const safe=value===null||value===undefined?0:value;
+        parts.push(`padding-${side.toLowerCase()}:${side==='Right'||side==='Left'?`min(${safe}px,49vw)`:`${safe}px`}`);
+      }
+      rules.push(`@media (max-width:768px){body{${parts.join(';')};}}`);
     }
     if(layout.maxWidthPx!==null){
       rules.push(`#h5p-container,#runtime-error,#runtime-status{box-sizing:border-box;width:100%;max-width:${layout.maxWidthPx}px;margin-left:auto;margin-right:auto;}`);
