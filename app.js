@@ -3,7 +3,7 @@
 
   const APP_VERSION = '1.0.1';
   const modules = globalThis.H5PConverterModules;
-  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage || !modules?.htmlMultifile || !modules?.exportLayout) {
+  if (!modules?.compatibility || !modules?.engineCatalog || !modules?.engineQualification || !modules?.scoring || !modules?.scorePlan || !modules?.dependencies || !modules?.analysis || !modules?.preview || !modules?.playerAssets || !modules?.portablePackage || !modules?.htmlMultifile || !modules?.exportLayout || !modules?.htmlSinglefilePreflight) {
     throw new Error('Modules H5P absents : vérifier le chargement avant app.js.');
   }
   const engineCatalog = modules.engineCatalog;
@@ -17,7 +17,7 @@
   const playerAssets = modules.playerAssets;
   const exportLayout = modules.exportLayout;
   function selectedLayout(){
-    return exportLayout.normalize({maxWidthPx:el('layoutMaxWidth').value,marginPx:el('layoutMargin').value});
+    return exportLayout.normalize({maxWidthPx:el('layoutMaxWidth').value,marginTopPx:el('layoutMarginTop').value,marginBottomPx:el('layoutMarginBottom').value,marginLeftPx:el('layoutMarginLeft').value,marginRightPx:el('layoutMarginRight').value});
   }
   const PLAYER_CDN = `https://cdn.jsdelivr.net/npm/h5p-standalone@${PLAYER_VERSION}`;
   const PLAYER_DIST_FILES = playerAssets.paths;
@@ -111,6 +111,7 @@
   const analyzeBtn = el('analyzeBtn');
   const generateBtn = el('generateBtn');
   const generateHtmlBtn = el('generateHtmlBtn');
+  const singlefileDiagnosticBtn=el('singlefileDiagnosticBtn');
   let generating = false;
   const diagnostic = el('diagnostic');
   const log = el('log');
@@ -510,6 +511,7 @@
       state.zip = await JSZip.loadAsync(buffer, { createFolders: true });
       state.analysis = await analyzeH5P(state.zip);
       renderDiagnostic(state.analysis);
+      singlefileDiagnosticBtn.disabled = false;
       generateBtn.disabled = !state.analysis.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
       generateHtmlBtn.disabled = generateBtn.disabled;
       if (state.analysis.ok) {
@@ -521,6 +523,7 @@
     } catch (error) {
       state.zip = null;
       state.analysis = null;
+      singlefileDiagnosticBtn.disabled = true;
       diagnostic.className = 'diagnostic status-error';
       diagnostic.textContent = `Impossible de lire l’archive : ${error.message}`;
       logLine(`Erreur : ${error.message}`);
@@ -842,6 +845,34 @@
     }
   }
 
+  // Lot 8.1 : rapport statique sans export monofichier non qualifié.
+  function downloadSinglefilePreflight(){
+    if(!state.zip || !state.analysis){
+      logLine('Diagnostic monofichier : chargez d abord un H5P.');
+      return;
+    }
+    try{
+      const report=modules.htmlSinglefilePreflight.inspect({
+        files:state.zip.files,h5pJson:state.analysis.h5pJson,
+        contentJson:state.analysis.contentJson,
+        customCss:[state.importedCss,el('cssText').value].filter(Boolean).join('\n\n'),
+        mainLibrary:state.analysis.mainKey,sourceName:state.file?.name||''
+      });
+      const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;
+      link.download=`${cleanFilename(state.file?.name||'activite')}-diagnostic-monofichier.json`;
+      document.body.appendChild(link);
+      link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      logLine(`Diagnostic HTML monofichier : ${report.inventory.fileCount} fichiers H5P inventoriés ; export non encore qualifié. Rapport téléchargé. Pour un déploiement immédiat, choisir HTML multifichier.`);
+    }catch(error){
+      console.error(error);
+      logLine(`Échec du diagnostic monofichier : ${error.message}`);
+    }
+  }
+
   // Lot 7 : le HTML et le SCORM partagent les ressources, mais pas les lanceurs.
   async function generateHtmlMultifile() {
     if (generating || !state.analysis?.ok || !state.zip) return;
@@ -921,6 +952,7 @@
     state.file = file || null;
     state.zip = null;
     state.analysis = null;
+    singlefileDiagnosticBtn.disabled = true;
     state.previewProfileId = RUNTIME_PROFILE_ID;
     state.qualificationSessions.clear();
     generateBtn.disabled = true;
@@ -1061,4 +1093,5 @@
   analyzeBtn.addEventListener('click', loadAndAnalyze);
   generateBtn.addEventListener('click', generateScorm);
   generateHtmlBtn.addEventListener('click', generateHtmlMultifile);
+  singlefileDiagnosticBtn.addEventListener('click',downloadSinglefilePreflight);
 })();

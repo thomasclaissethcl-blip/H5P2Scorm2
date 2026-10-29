@@ -26,7 +26,7 @@
       generatedAt:new Date().toISOString(),title,language,
       mainLibrary,player:{name:'h5p-standalone',version:playerVersion,profileId,declaredCoreApiCeiling:coreApi},
       libraries:(libraries||[]).map(item=>({library:item.key,folder:item.folder})),
-      parameters:{customCssBytes:cssLength,layout:layout||{maxWidthPx:null,marginPx:null},scormBridge:false,tracking:'aucun suivi LMS',resume:'aucune sauvegarde LMS'},
+      parameters:{customCssBytes:cssLength,layout:layout||{maxWidthPx:null,marginTopPx:null,marginBottomPx:null,marginLeftPx:null,marginRightPx:null},scormBridge:false,tracking:'aucun suivi LMS',resume:'aucune sauvegarde LMS'},
       localization,
       portability:{entryPoint:'index.html',paths:'relative-to-index',server:'HTTP(S) statique',backendRequired:false,cdnRequiredAtRuntime:false,
         compatibleDeployment:'repertoire ou sous-repertoire web accessible par HTTP(S)',

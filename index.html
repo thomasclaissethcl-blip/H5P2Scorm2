@@ -60,12 +60,18 @@
           <label for="layoutMaxWidth">Largeur maximale du contenu (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la largeur du contenu" data-help="Largeur maximale du conteneur H5P dans les exports SCORM et HTML. Le contenu est centré automatiquement ; sur les petits écrans, sa largeur diminue pour rester visible. Laissez vide pour utiliser toute la largeur disponible.">?</button></label>
           <input id="layoutMaxWidth" type="number" min="1" max="10000" step="1" inputmode="numeric" placeholder="Automatique, ex. 960">
         </div>
-        <div class="field">
-          <label for="layoutMargin">Marges autour du contenu (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les marges" data-help="Espace de même taille en haut, en bas, à gauche et à droite du contenu exporté. Saisissez 0 pour supprimer les marges, ou laissez vide pour conserver la présentation d'origine. Ne modifie pas le mode plein écran natif.">?</button></label>
-          <input id="layoutMargin" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Automatique, ex. 24">
+        <div class="field-note">
+          <div class="field-note-title">Marges indépendantes</div>
+          <span>Réglez séparément le haut, le bas, la gauche et la droite. Un champ vide laisse ce côté inchangé ; 0 supprime l'espace ajouté.</span>
         </div>
       </div>
-      <p class="muted">Réglages facultatifs communs aux exports SCORM et HTML. Les champs vides conservent l’affichage actuel. La largeur reste responsive et le plein écran natif n’est pas limité. La visionneuse de contrôle conserve sa propre mise en page.</p>
+      <div class="grid four">
+        <div class="field"><label for="layoutMarginTop">Marge haute (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge haute" data-help="Espace au-dessus de l’activité. Laisser vide pour ne rien ajouter ; 0 pour une marge nulle.">?</button></label><input id="layoutMarginTop" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 20"></div>
+        <div class="field"><label for="layoutMarginBottom">Marge basse (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge basse" data-help="Espace sous l’activité. Laisser vide pour ne rien ajouter ; 0 pour une marge nulle.">?</button></label><input id="layoutMarginBottom" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 20"></div>
+        <div class="field"><label for="layoutMarginLeft">Marge gauche (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge gauche" data-help="Espace à gauche du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive.">?</button></label><input id="layoutMarginLeft" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 24"></div>
+        <div class="field"><label for="layoutMarginRight">Marge droite (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge droite" data-help="Espace à droite du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive.">?</button></label><input id="layoutMarginRight" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 24"></div>
+      </div>
+      <p class="muted">Réglages facultatifs communs aux exports SCORM et HTML. Un champ vide n’ajoute aucune marge pour ce côté. La largeur maximale entraîne le centrage automatique ; sur écran étroit, les marges latérales sont limitées pour éviter un débordement. Le plein écran natif est préservé.</p>
 
       <div class="field">
         <label for="cssText">CSS intégré <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le CSS intégré" data-help="Ajoutez ou modifiez ici des règles CSS. Elles s'ajoutent au fichier CSS éventuellement importé. Laissez vide si aucune surcouche n'est souhaitée.">?</button></label>
@@ -198,11 +204,12 @@
           <h2>Génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la génération" data-help="Le navigateur construit le ZIP SCORM ou HTML multifichier localement. Une connexion Internet est actuellement nécessaire au moment de la conversion pour récupérer la version figée du lecteur H5P Standalone. Les exports restent autonomes après génération.">?</button></h2>
         </div>
         <div class="preview-actions">
+          <button id="singlefileDiagnosticBtn" type="button" disabled>Diagnostic HTML monofichier</button>
           <button id="generateHtmlBtn" type="button" disabled>Générer le HTML multifichier</button>
           <button id="generateBtn" type="button" disabled>Générer le SCORM</button>
         </div>
       </div>
-      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Aucun suivi SCORM dans ce format. Les réglages de notation et de reprise ci-dessus concernent uniquement l'export SCORM.</p>
+      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le diagnostic HTML monofichier télécharge un rapport de faisabilité, sans créer de fichier HTML non qualifié. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
       <div id="generationProgressWrap" class="generation-progress" hidden>
         <div class="generation-progress-head">
           <span id="generationProgressPhase">Génération</span>
@@ -221,7 +228,7 @@
         </div>
       </div>
       <ul>
-        <li>Deux sorties disponibles : SCORM 1.2 avec suivi LMS et HTML multifichier sans suivi LMS. HTML monofichier encore indisponible.</li>
+        <li>Deux sorties disponibles : SCORM 1.2 avec suivi LMS et HTML multifichier sans suivi LMS. L'HTML monofichier est en étude : seul son diagnostic de faisabilité est disponible (aucun HTML unique non certifié n'est distribué).</li>
         <li>Runtime figé : H5P Standalone 3.8.2, plafond de compatibilité déclaré H5P Core API 1.28. Une bibliothèque requérant une API plus récente bloque la génération.</li>
         <li>Score SCORM normalisé de 0 à 100, quel que soit le barème natif du H5P.</li>
         <li>Reprise stricte limitée à 4000 caractères après optimisation. Le mode Moodle 64K est expérimental.</li>
@@ -239,6 +246,7 @@
   <script src="src/portable-package.js"></script>
   <script src="src/html-multifile.js"></script>
   <script src="src/export-layout.js"></script>
+  <script src="src/html-singlefile-preflight.js"></script>
   <script src="src/engine-qualification.js"></script>
   <script src="src/scorm-scoring.js"></script>
   <script src="src/scorm-score-plan.js"></script>

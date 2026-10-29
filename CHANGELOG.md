@@ -93,3 +93,10 @@ Première version stable centrée sur Moodle et SCORM 1.2.
 - Validation stricte des valeurs, sortie inchangée avec les champs vides.
 - Module partagé `src/export-layout.js` et nouveaux contrôles automatisés.
 - Aucune modification des moteurs, de la visionneuse, du suivi SCORM et de la notation.
+
+## 2026-10-29 : correctif 7c et préparation du lot 8.1
+
+- Quatre marges indépendantes en px pour les exports SCORM et HTML multifichier ; valeurs vides sans effet, centrage et plein écran conservés, protection des petits écrans.
+- Compatibilité interne de l'ancien réglage uniforme `marginPx` du lot 7b.
+- Diagnostic statique téléchargeable de faisabilité HTML monofichier (inventaire, tailles, références externes). Aucun export monofichier non certifié n'est généré.
+- 41/41 tests automatisés et génération Chromium réelle de Game Map en ZIP HTML multifichier et SCORM. Recette des exports sur hébergement et Moodle encore ouverte.

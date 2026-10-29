@@ -23,6 +23,7 @@ p { margin-top: 0; }
 .grid { display: grid; gap: 16px; }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .field { min-width: 0; }
 label, .inline-label { display: block; margin: 8px 0 6px; font-weight: 700; color: #25334a; }
 input[type="text"], input[type="number"], select, textarea, input[type="file"] { width: 100%; font: inherit; color: inherit; }
@@ -89,7 +90,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 @media (max-width: 760px) {
   .shell { width: min(100% - 20px, 1120px); margin-top: 18px; }
   .panel { padding: 17px; border-radius: 12px; }
-  .grid.two, .grid.three { grid-template-columns: 1fr; }
+  .grid.two, .grid.three, .grid.four { grid-template-columns: 1fr; }
   .row.between { align-items: stretch; flex-direction: column; }
   .row.between > button { align-self: flex-start; }
   .hero-meta { align-items: flex-start; }

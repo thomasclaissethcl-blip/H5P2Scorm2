@@ -25,7 +25,7 @@ with sync_playwright() as pw:
  page.set_content(html)
  page.add_script_tag(content=init)
  page.evaluate('(f)=>window.__fixture=f',fixture)
- for path in ['src/runtime-profiles.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/export-layout.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','src/youtube-preview.js','app.js']:
+ for path in ['src/runtime-profiles.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/export-layout.js','src/html-singlefile-preflight.js','src/engine-catalog.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','src/youtube-preview.js','app.js']:
   page.add_script_tag(content=(ROOT/path).read_text())
  page.locator('#h5pFile').set_input_files(str(GAME))
  page.wait_for_function('document.querySelector("#previewEngineProfile") !== null',timeout=20000)
