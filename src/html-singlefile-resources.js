@@ -71,7 +71,7 @@
     if(!bundle||bundle.schemaVersion!==1||!bundle.records)throw new TypeError('Conteneur invalide.');
     // Le JSON dans un script inerte n'est pas du code execute. Bloquer </script>.
     const data=JSON.stringify(bundle).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
-    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><style>body{font:16px/1.5 system-ui,Arial,sans-serif;max-width:860px;margin:30px auto;padding:0 16px;color:#222}section{border:1px solid #bbb;padding:16px;margin:14px 0}code{overflow-wrap:anywhere}img{max-width:100%;max-height:160px}#result{white-space:pre-wrap} .warning{color:#872d18}</style></head><body><h1>Lot 8.2 : prototype de ressources H5P</h1><p class="warning"><strong>Diagnostic uniquement.</strong> Ce document intègre les ressources dans un unique HTML, mais ne lance aucune activité H5P et ne fournit pas la lecture interactive.</p><section><h2>Contrôles hors ligne</h2><p id="result" role="status">Examen en cours…</p><div id="media-preview"></div></section><p>La disponibilité des fichiers est testée sans serveur, y compris sous <code>file://</code>. Le moteur H5P Standalone exige encore une résolution fiable des chargements dynamiques avant la qualification d'un export monofichier interactif.</p><script type="application/json" id="embedded-resource-manifest">${data}</script><script>
+    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><style>body{font:16px/1.5 system-ui,Arial,sans-serif;max-width:860px;margin:30px auto;padding:0 16px;color:#222}section{border:1px solid #bbb;padding:16px;margin:14px 0}code{overflow-wrap:anywhere}img{max-width:100%;max-height:160px}#result{white-space:pre-wrap} .warning{color:#872d18} #media-preview{display:flex;flex-wrap:wrap;gap:12px} #media-preview figure{margin:0;max-width:260px} #media-preview figcaption{font-size:12px;overflow-wrap:anywhere} progress{width:100%;max-width:480px}</style></head><body><h1>Lot 8.2 : prototype de ressources H5P</h1><p class="warning"><strong>Diagnostic uniquement.</strong> Ce document intègre les ressources dans un unique HTML, mais ne lance aucune activité H5P et ne fournit pas la lecture interactive.</p><section><h2>Contrôles hors ligne</h2><p id="result" role="status">Préparation du diagnostic…</p><progress id="check-progress" max="100" value="0" aria-label="Progression du contrôle des ressources"></progress><h3>Aperçus des images du contenu</h3><div id="media-preview"></div></section><p>La disponibilité des fichiers est testée sans serveur, y compris sous <code>file://</code>. Le moteur H5P Standalone exige encore une résolution fiable des chargements dynamiques avant la qualification d'un export monofichier interactif.</p><script type="application/json" id="embedded-resource-manifest">${data}</script><script>
 (function(){'use strict';
   const bundle=JSON.parse(document.getElementById('embedded-resource-manifest').textContent);
   function path(input,base=''){const raw=String(input||'').split(/[?#]/)[0];if(!raw||/^[a-z][a-z0-9+.-]*:/i.test(raw)||raw.startsWith('/')||raw.includes('\\\\'))return null;let decoded;try{decoded=decodeURIComponent(raw)}catch(_){return null}if(!decoded||decoded.includes('\\\\'))return null;const stack=base?String(base).split('/').slice(0,-1):[];for(const bit of decoded.split('/')){if(!bit||bit==='.')continue;if(bit==='..'){if(!stack.length)return null;stack.pop();continue;}stack.push(bit);}const out=stack.join('/');if(!out||out.startsWith('/')||out.split('/').some(s=>!s||s==='.'||s==='..'))return null;return out;}
@@ -81,18 +81,54 @@
   function cssText(input){const file=path(input);const data=bytes(file);if(!data)return null;const text=new TextDecoder().decode(data);return text.replace(/url\\(\\s*(['"]?)([^)'"]+)\\1\\s*\\)/gi,(whole,quote,target)=>{const found=dataUrl(target.trim(),file);return found?'url("'+found+'")':whole;});}
   // API d'inspection volontairement en lecture seule, aucun script H5P execute.
   window.H5PResourcePrototype=Object.freeze({resolve:path,get:function(p,base){const r=get(p,base);return r?Object.freeze({mime:r.mime,size:r.size}):null},dataUrl,bytes,cssText});
-  const paths=Object.keys(bundle.records);let actual=0;let mismatches=[];
-  for(const p of paths){const b=bytes(p);actual+=b.length;if(b.length!==bundle.records[p].size)mismatches.push(p);}
+  // Afficher les vraies images du contenu (pas les polices SVG ni les icones de bibliotheques).
+  const paths=Object.keys(bundle.records);
+  const imagePaths=paths.filter(p=>/^h5p\\/content\\//i.test(p)&&/\\.(png|jpe?g|gif|webp)$/i.test(p));
+  const previews=document.getElementById('media-preview');
+  const chosen=imagePaths.slice(0,3);
+  if(chosen.length){
+    chosen.forEach(p=>{
+      const figure=document.createElement('figure');
+      const img=document.createElement('img');img.alt='Image du contenu H5P : '+p;img.src=dataUrl(p);img.loading='eager';
+      const label=document.createElement('figcaption');label.textContent=p;
+      img.addEventListener('error',()=>{label.textContent=p+' (image non affichable)';});
+      figure.appendChild(img);figure.appendChild(label);previews.appendChild(figure);
+    });
+  } else {
+    previews.textContent='Aucune image matricielle dans le dossier de contenu. Les autres ressources restent inventoriees.';
+  }
+  const result=document.getElementById('result');
+  const progress=document.getElementById('check-progress');
   const meta=bytes('h5p/h5p.json');const content=bytes('h5p/content/content.json');
   const required=['h5p/h5p.json','h5p/content/content.json','player/main.bundle.js','player/frame.bundle.js','player/styles/h5p.css'];
   const missing=required.filter(p=>!get(p));
   let parsed=false;
   try{if(meta&&content){JSON.parse(new TextDecoder().decode(meta));JSON.parse(new TextDecoder().decode(content));parsed=true;}}catch(_){parsed=false;}
-  const success=!missing.length&&!mismatches.length&&parsed&&actual===bundle.totalBytes&&paths.length===bundle.fileCount;
-  document.getElementById('result').textContent=(success?'RESSOURCES VERIFIEES':'DIAGNOSTIC INCOMPLET')+'\\nFichiers intégrés : '+paths.length+'\\nOctets vérifiés : '+actual+'\\nMétadonnées JSON : '+(parsed?'OK':'absentes ou invalides')+'\\nRessources indispensables absentes : '+(missing.join(', ')||'aucune')+'\\nTailles incorrectes : '+mismatches.length;
-  document.documentElement.dataset.resourceCheck=success?'ok':'error';
-  const first=paths.find(p=>/\\.(png|jpe?g|gif|webp|svg)$/i.test(p));
-  if(first){const img=document.createElement('img');img.alt='Aperçu de ressource locale : '+first;img.src=dataUrl(first);document.getElementById('media-preview').appendChild(img);}
+  // Un controle progressif libere le thread principal pour l'affichage et les interactions.
+  async function verify(){
+    let actual=0;const mismatches=[];
+    const step=10;
+    for(let i=0;i<paths.length;i+=step){
+      for(const p of paths.slice(i,i+step)){
+        const b=bytes(p);
+        if(!b){mismatches.push(p);continue;}
+        actual+=b.length;
+        if(b.length!==bundle.records[p].size)mismatches.push(p);
+      }
+      const checked=Math.min(paths.length,i+step);
+      progress.value=paths.length?Math.round(checked*100/paths.length):100;
+      result.textContent='Verification en cours : '+checked+' / '+paths.length+' fichiers ('+progress.value+' %).';
+      await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    const success=!missing.length&&!mismatches.length&&parsed&&actual===bundle.totalBytes&&paths.length===bundle.fileCount;
+    result.textContent=(success?'RESSOURCES VERIFIEES':'DIAGNOSTIC INCOMPLET')+'\\nFichiers integres : '+paths.length+'\\nOctets verifies : '+actual+'\\nMetadonnees JSON : '+(parsed?'OK':'absentes ou invalides')+'\\nRessources indispensables absentes : '+(missing.join(', ')||'aucune')+'\\nTailles incorrectes : '+mismatches.length+'\\nImages du contenu detectees : '+imagePaths.length;
+    document.documentElement.dataset.resourceCheck=success?'ok':'error';
+    progress.value=100;
+  }
+  verify().catch(error=>{
+    document.documentElement.dataset.resourceCheck='error';
+    result.textContent='ECHEC DU DIAGNOSTIC : '+String(error?.message||error);
+  });
 })();
 </script></body></html>`;
   }
