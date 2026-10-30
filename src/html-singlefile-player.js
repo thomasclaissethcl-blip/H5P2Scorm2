@@ -75,7 +75,10 @@
       externalVideos:(mediaReport.externalMedia||[]).filter(v=>v.kind==='video').slice(0,20),
       missingLocalMedia:(mediaReport.missingLocalMedia||[]).slice(0,20),
       noExternalMediaDetected:(mediaReport.externalMedia||[]).length===0&&(mediaReport.missingLocalMedia||[]).length===0&&!mediaReport.parseError,
-      externalRequests:report.externalRequests.slice(0,20)
+      externalRequests:report.externalRequests.slice(0,20),
+      documentProtocol:location.protocol,
+      youtubeRequiresHttpOrigin:(mediaReport.externalMedia||[]).some(v=>v.service==='YouTube'),
+      youtubeLocalFileUnsupported:location.protocol==='file:'&&(mediaReport.externalMedia||[]).some(v=>v.service==='YouTube')
     });
     function setStatus(msg,isError){
       if(!status)return;
@@ -350,8 +353,10 @@
         if(config.translations)options.translations=config.translations;
         await new H5PStandalone.H5P(document.getElementById('h5p-container'),options);
         report.state='ready';
-        if((mediaReport.externalMedia||[]).length){
-          setStatus('Attention : '+mediaReport.externalMedia.length+' média(s) externe(s), notamment YouTube/Vimeo, nécessitent Internet et peuvent être bloqués en ouverture locale. Ces vidéos ne sont pas intégrées dans le fichier H5P. Les vidéos locales MP4/WebM restent embarquées.');
+        if(location.protocol==='file:'&&(mediaReport.externalMedia||[]).some(v=>v.service==='YouTube')){
+          setStatus('Vidéo YouTube externe : ce fichier est ouvert en file://. YouTube exige une origine HTTP(S) identifiable et peut renvoyer l’erreur 153 sans en-tête Referer. Publiez CE MÊME HTML sur un hébergement HTTPS et ouvrez-le depuis son adresse web pour tester la lecture intégrée. Une vidéo YouTube ne fonctionne pas hors ligne et n’est pas incluse dans l’archive H5P.');
+        }else if((mediaReport.externalMedia||[]).length){
+          setStatus('Attention : '+mediaReport.externalMedia.length+' média(s) externe(s), notamment YouTube/Vimeo, nécessitent Internet. Sur HTTPS, la politique de référent autorise l’envoi de l’origine du site ; YouTube peut néanmoins refuser certaines lectures. Les vidéos locales MP4/WebM restent embarquées.');
         }else if((mediaReport.missingLocalMedia||[]).length){
           setStatus('Attention : '+mediaReport.missingLocalMedia.length+' média(s) locaux sont absents du fichier H5P source.');
         }else setStatus('');
@@ -367,7 +372,11 @@
   function render({bundle,title='Activité H5P',language='en',translations=null,layoutCss=''}={}){
     validate(bundle);
     const cfg={language:String(language||'en'),translations,mediaReport:inspectOfflineMedia(bundle)};
-    return '<!doctype html>\n<html lang="'+escapeHtml(language||'en')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escapeHtml(title)+'</title><style>html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#222}#h5p-container{width:100%}#singlefile-status{font:14px/1.5 Arial,sans-serif;padding:12px;white-space:pre-wrap}#singlefile-status[hidden]{display:none}'+String(layoutCss||'')+'</style></head><body><div id="singlefile-status" role="status">Initialisation du monofichier expérimental…</div><div id="h5p-container"></div><script id="embedded-h5p-resources" type="application/json">'+safeJson(bundle)+'</script><script>('+playbackRuntime.toString()+')('+safeJson(cfg)+');</script></body></html>';
+    // YouTube error 153 : sous HTTPS, laisser le navigateur envoyer l'origine du site.
+    // Sous file://, aucune balise HTML ne peut fabriquer un en-tête Referer HTTP.
+    const youtubeReferrerMeta=cfg.mediaReport.externalMedia.some(m=>m.service==='YouTube')
+      ?'<meta name="referrer" content="strict-origin-when-cross-origin">':'';
+    return '<!doctype html>\n<html lang="'+escapeHtml(language||'en')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+youtubeReferrerMeta+'<title>'+escapeHtml(title)+'</title><style>html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#222}#h5p-container{width:100%}#singlefile-status{font:14px/1.5 Arial,sans-serif;padding:12px;white-space:pre-wrap}#singlefile-status[hidden]{display:none}'+String(layoutCss||'')+'</style></head><body><div id="singlefile-status" role="status">Initialisation du monofichier expérimental…</div><div id="h5p-container"></div><script id="embedded-h5p-resources" type="application/json">'+safeJson(bundle)+'</script><script>('+playbackRuntime.toString()+')('+safeJson(cfg)+');</script></body></html>';
   }
   const api=Object.freeze({validate,render,inspectOfflineMedia,MAX_BYTES,MUST_HAVE});
   const mods=root.H5PConverterModules||(root.H5PConverterModules={});
