@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const app=readFileSync('app.js','utf8');
+const html=readFileSync('index.html','utf8');
+const resources=readFileSync('src/html-singlefile-resources.js','utf8');
+const r=require('../src/html-singlefile-resources.js');
+const p=require('../src/html-singlefile-player.js');
+for(const obsolete of ['singlefileDiagnosticBtn','singlefileResourceBtn','downloadSinglefilePreflight','downloadSinglefileResourcePrototype','htmlSinglefilePreflight']){
+ assert(!app.includes(obsolete),`Référence obsolète dans app.js : ${obsolete}`);
+ assert(!html.includes(obsolete),`Référence obsolète dans index.html : ${obsolete}`);
+}
+assert(!existsSync('src/html-singlefile-preflight.js'));
+assert(!html.includes('src/html-singlefile-preflight.js'));
+assert(!resources.includes('embedded-resource-manifest'));
+assert(!resources.includes('Prototype de ressources H5P'));
+assert.equal(typeof r.render,'undefined');
+assert.equal(typeof r.collect,'function');
+assert.equal(typeof r.safePath,'function');
+assert.equal(typeof r.resolveRelative,'undefined','Résolveur du prototype non interactif supprimé');
+assert.equal(typeof p.render,'function');
+assert.equal(typeof p.inspectOfflineMedia,'function');
+assert.equal(typeof p.inspectInteractiveVideo,'function');
+assert(html.includes('id="singlefileInteractiveBtn"'));
+assert(html.includes('id="generateHtmlBtn"'));
+assert(html.includes('id="generateBtn"'));
+assert(app.includes('modules.htmlSinglefileResources.collect'));
+assert(app.includes('modules.htmlSinglefilePlayer.render'));
+assert(app.includes("setGenerationProgress(100,'Terminé (essai non qualifié)')"));
+console.log('Lot 8.4b : 2 boutons obsolètes retirés ; collecte, sécurité, monofichier interactif et SCORM/HTML conservés.');

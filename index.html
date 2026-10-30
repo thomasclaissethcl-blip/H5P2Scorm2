@@ -211,14 +211,12 @@
           <h2>Génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la génération" data-help="Le navigateur construit le ZIP SCORM ou HTML multifichier localement. Une connexion Internet est actuellement nécessaire au moment de la conversion pour récupérer la version figée du lecteur H5P Standalone. Les exports restent autonomes après génération.">?</button></h2>
         </div>
         <div class="preview-actions">
-          <button id="singlefileDiagnosticBtn" type="button" disabled>Diagnostic HTML monofichier</button>
-          <button id="singlefileResourceBtn" type="button" disabled>Prototype ressources (non interactif)</button>
           <button id="singlefileInteractiveBtn" type="button" disabled>HTML monofichier interactif (essai)</button>
           <button id="generateHtmlBtn" type="button" disabled>Générer le HTML multifichier</button>
           <button id="generateBtn" type="button" disabled>Générer le SCORM</button>
         </div>
       </div>
-      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le diagnostic et le prototype de ressources restent disponibles. Le bouton « HTML monofichier interactif (essai) » crée une version expérimentale avec lecteur embarqué, sans garantie pour tous les types H5P. En cas d’incompatibilité, utilisez le HTML multifichier. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
+      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le bouton « HTML monofichier interactif (essai) » crée une version expérimentale avec lecteur embarqué, sans garantie pour tous les types H5P. En cas d’incompatibilité, utilisez le HTML multifichier. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
       <div id="generationProgressWrap" class="generation-progress" hidden>
         <div class="generation-progress-head">
           <span id="generationProgressPhase">Génération</span>
@@ -255,7 +253,6 @@
   <script src="src/portable-package.js"></script>
   <script src="src/html-multifile.js"></script>
   <script src="src/export-layout.js"></script>
-  <script src="src/html-singlefile-preflight.js"></script>
   <script src="src/html-singlefile-resources.js"></script>
   <script src="src/html-singlefile-player.js"></script>
   <script src="src/engine-qualification.js"></script>

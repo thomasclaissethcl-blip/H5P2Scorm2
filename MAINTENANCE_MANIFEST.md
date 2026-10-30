@@ -1,3 +1,7 @@
+### Référence technique, lot 8.4b
+
+`src/html-singlefile-preflight.js` est supprimé et ne doit plus être chargé. Les boutons `singlefileDiagnosticBtn` et `singlefileResourceBtn` sont supprimés ; aucun remplacement utilisateur n'est nécessaire. Le diagnostic actif est effectué dans le journal du générateur et dans `H5PConverterSinglefileAudit()` à l'intérieur de l'export (usage technique). Le collecteur `src/html-singlefile-resources.js` et ses protections sont toujours requis pour l'export HTML monofichier interactif.
+
 # Manifeste de maintenance et de reprise du projet
 
 Ce document est la référence de transmission pour toute personne ou toute nouvelle instance de ChatGPT amenée à maintenir **H5P vers SCORM 1.2**.

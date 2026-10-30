@@ -1,3 +1,12 @@
+## Lot 8.4b, 30 octobre 2026 : nettoyage UI et préparation de la qualification Interactive Video
+
+- Recette utilisateur 8.4a : 10 contrôles sur 10 validés.
+- Retrait des boutons obsolètes « Diagnostic HTML monofichier » et « Prototype ressources (non interactif) » ainsi que de leurs fonctions et de la génération de prototype.
+- Suppression du module `src/html-singlefile-preflight.js`, remplacé par l'analyseur courant de médias du lecteur interactif.
+- Conservation de `src/html-singlefile-resources.js` et de `collect()`, indispensable au véritable export HTML monofichier, y compris ses limites, ses protections de chemins et sa progression.
+- Qualification statique préparatoire `inspectInteractiveVideo()` : détecte le type H5P.InteractiveVideo, recense sources vidéo et interactions déclarées, vérifie les médias référencés. La lecture synchronisée reste **non qualifiée** sans véritable H5P de recette avec MP4 local.
+- Vérification : 50 suites automatisées sur 50 et Chromium simulé pour l'import et les refus. Aucun nouveau résultat Moodle/Firefox revendiqué.
+
 # Changelog
 
 ## Lot 8.4a : présentation neutre et premier essai Interactive Book (30 octobre 2026)

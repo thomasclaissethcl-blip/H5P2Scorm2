@@ -1,3 +1,9 @@
+### Nettoyage du lot 8.4b
+
+Le point d'entrée `index.html` ne charge plus `src/html-singlefile-preflight.js`. Le module a été supprimé car son unique bouton et ses usages ont été retirés. `src/html-singlefile-resources.js` doit être conservé : `collect` produit le bundle réel utilisé par `src/html-singlefile-player.js`. Sa fonction `render` de prototype non interactif a été supprimée.
+
+Les tests des écrans retirés ont été retirés du lanceur ; les garanties encore utiles sont reprises dans `tests/html-singlefile-resources82.mjs`, `tests/resource-collector-progress85.mjs` et `tests/ui-cleanup85.mjs`. Les anciennes fiches de recette dans `docs/` sont des archives historiques et ne documentent plus l'interface courante.
+
 # Développement de H5P Converter
 
 **État du travail : lot 3 développé, visionneuse expérimentale ajoutée.**

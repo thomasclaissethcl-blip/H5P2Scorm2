@@ -20,7 +20,7 @@ OUTPUT=Path(args.out);OUTPUT.mkdir(parents=True,exist_ok=True)
 JSZIP=Path(args.jszip)
 for path in [GAME,REFERENCE,JSZIP]:
     if not path.is_file():parser.error('Fichier introuvable : '+str(path))
-SCRIPTS=['src/runtime-profiles.js','src/engine-catalog.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/export-layout.js','src/html-singlefile-preflight.js','src/html-singlefile-resources.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','src/youtube-preview.js','app.js']
+SCRIPTS=['src/runtime-profiles.js','src/engine-catalog.js','src/player-assets.js','src/portable-package.js','src/html-multifile.js','src/export-layout.js','src/html-singlefile-resources.js','src/engine-qualification.js','src/scorm-scoring.js','src/scorm-score-plan.js','src/h5p-dependencies.js','src/h5p-analysis.js','src/preview-frame.js','src/h5p-preview.js','src/youtube-preview.js','app.js']
 with zipfile.ZipFile(REFERENCE) as reference:
     dist={item.filename:reference.read(item.filename) for item in reference.infolist() if item.filename.startswith('player/') and not item.is_dir()}
 print('Player local dist:',len(dist), 'files',flush=True)
@@ -75,16 +75,6 @@ with sync_playwright() as pw:
         layout=json.loads(archive.read('generation-report.json'))['layout']
         assert layout=={'maxWidthPx':960,'marginTopPx':12,'marginRightPx':36,'marginBottomPx':48,'marginLeftPx':24},layout
     # Diagnostic monofichier : aucune fausse generation HTML.
-    assert page.locator('#singlefileDiagnosticBtn').is_enabled()
-    with page.expect_download(timeout=20000) as transfer:
-        page.locator('#singlefileDiagnosticBtn').click()
-    dl=transfer.value
-    diagnostic=OUTPUT/'game-monofichier-preflight.json';dl.save_as(diagnostic)
-    report=json.loads(diagnostic.read_text())
-    assert report['qualification']['supported'] is False
-    assert report['qualification']['recommendedFormat']=='html-multifile'
-    assert report['inventory']['fileCount']>900
-    print('Monofichier preflight:',report['inventory']['fileCount'],'H5P files',flush=True)
     assert not errors,errors
     browser.close()
 print('Chromium : H5P Game Map réel, JSZip réel, 2 ZIP générés et diagnostic téléchargé, aucune erreur applicative')

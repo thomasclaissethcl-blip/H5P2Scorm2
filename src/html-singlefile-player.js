@@ -60,6 +60,46 @@
     return {externalMedia,missingLocalMedia,localMediaReferences,localVideoFiles,parseError:false};
   }
 
+  // Qualification statique preparatoire, sans prétendre valider la synchronisation.
+  // Les versions et structures réelles d'Interactive Video doivent être recettées.
+  function inspectInteractiveVideo(bundle){
+    validate(bundle);
+    const parseRecord=(path)=>{
+      const record=bundle.records[path];
+      if(!record)return null;
+      try{
+        const raw=atob(record.base64);
+        const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
+        return JSON.parse(new TextDecoder().decode(bytes));
+      }catch(_){return null;}
+    };
+    const metadata=parseRecord('h5p/h5p.json');
+    const content=parseRecord('h5p/content/content.json');
+    const mainLibrary=String(metadata?.mainLibrary||'');
+    const detected=/^H5P\.InteractiveVideo(?:\s|$)/.test(mainLibrary);
+    if(!detected)return Object.freeze({detected:false});
+    const media=inspectOfflineMedia(bundle);
+    // Suivant l'exporteur H5P, les paramètres sont dans interactiveVideo
+    // ou à la racine du document. On n'en infère aucune compatibilité.
+    const params=content?.interactiveVideo||content||{};
+    const files=params?.video?.files||[];
+    const interactions=params?.assets?.interactions||[];
+    const videoSources=Array.isArray(files)?files:[];
+    const overlays=Array.isArray(interactions)?interactions:[];
+    return Object.freeze({
+      detected:true,
+      mainLibrary,
+      videoSourceCount:videoSources.length,
+      interactionsDeclared:overlays.length,
+      localVideoFiles:media.localVideoFiles,
+      externalVideoReferences:media.externalMedia.filter(v=>v.kind==='video').length,
+      missingLocalMedia:media.missingLocalMedia.length,
+      videoFilePresent:media.localVideoFiles>0,
+      qualification:'non-qualifie-synchronisation',
+      requiredTests:['lecture-du-media-local','declenchement-des-interactions-a-l-horodatage','reprise-apres-interaction','lecture-file-et-https']
+    });
+  }
+
   // This function is stringified verbatim into the exported HTML.
   // No external script is fetched by the bootstrap itself.
   function playbackRuntime(config){
@@ -376,7 +416,7 @@
       ?'<meta name="referrer" content="strict-origin-when-cross-origin">':'';
     return '<!doctype html>\n<html lang="'+escapeHtml(language||'en')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+youtubeReferrerMeta+'<title>'+escapeHtml(title)+'</title><style>html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#222}#h5p-container{width:100%}#singlefile-status{font:14px/1.5 Arial,sans-serif;padding:12px;white-space:pre-wrap}#singlefile-status[hidden]{display:none}'+String(layoutCss||'')+'</style></head><body><div id="singlefile-status" role="alert" hidden></div><div id="h5p-container"></div><script id="embedded-h5p-resources" type="application/json">'+safeJson(bundle)+'</script><script>('+playbackRuntime.toString()+')('+safeJson(cfg)+');</script></body></html>';
   }
-  const api=Object.freeze({validate,render,inspectOfflineMedia,MAX_BYTES,MUST_HAVE});
+  const api=Object.freeze({validate,render,inspectOfflineMedia,inspectInteractiveVideo,MAX_BYTES,MUST_HAVE});
   const mods=root.H5PConverterModules||(root.H5PConverterModules={});
   mods.htmlSinglefilePlayer=api;
   if(typeof module==='object'&&module.exports)module.exports=api;

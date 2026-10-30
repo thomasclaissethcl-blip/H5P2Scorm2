@@ -1,3 +1,9 @@
+## Réserve de compatibilité au lot 8.4b
+
+- `H5P.InteractiveBook` SST406 : monofichier recetté par l'utilisateur au lot 8.4a dans le périmètre des contrôles effectués.
+- `H5P.InteractiveVideo` avec MP4 local : **qualification non achevée**. Un inventaire statique est intégré au journal du générateur. Déclenchement horodaté des interactions et reprise de la lecture non testés sur un vrai fichier avec toutes ses bibliothèques.
+- YouTube en monofichier : vidéo externe non embarquée ; lecture HTTPS confirmée par l'utilisateur ; `file://` peut échouer à cause de la politique de référent. Ne pas déclarer la vidéo consultable hors ligne.
+
 # Compatibilité observée
 
 Cette matrice décrit des tests réellement effectués ou automatisés. Elle ne constitue pas une garantie universelle pour toutes les versions de bibliothèques H5P.

@@ -1,5 +1,12 @@
 # H5P vers SCORM 1.2 - version 1.0.1
 
+### État actuel, lot 8.4b
+
+L'étape Génération affiche trois sorties : **SCORM 1.2**, **HTML multifichier** et **HTML monofichier interactif (essai)**. Les anciens boutons de prédiagnostic et de prototype non interactif ont été retirés avec leur code exclusif. Le collecteur `src/html-singlefile-resources.js` reste nécessaire au monofichier interactif.
+
+Le journal de génération conserve le diagnostic des médias externes et indique les sources et interactions d'une activité `H5P.InteractiveVideo` détectée. L'inventaire statique ne prouve pas la lecture des interactions synchronisées : la compatibilité d'Interactive Video avec MP4 local reste à recetter avant qualification.
+
+
 Application web statique destinée à GitHub Pages. Aucun Node.js, serveur applicatif ou outil de compilation n'est requis sur le poste utilisateur.
 
 ## Objectif
