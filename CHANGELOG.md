@@ -118,3 +118,11 @@ Première version stable centrée sur Moodle et SCORM 1.2.
 - Compatibilité interne de l'ancien réglage uniforme `marginPx` du lot 7b.
 - Diagnostic statique téléchargeable de faisabilité HTML monofichier (inventaire, tailles, références externes). Aucun export monofichier non certifié n'est généré.
 - 41/41 tests automatisés et génération Chromium réelle de Game Map en ZIP HTML multifichier et SCORM. Recette des exports sur hébergement et Moodle encore ouverte.
+
+## 2026-10-30 : correctif 8.3b, Memory et médias monofichier
+
+- Résolution des images créées dans des chaînes HTML et des styles inline (H5P.MemoryGame).
+- Test de lecture hors réseau d'un vrai H5P.Video avec MP4 local et lecteur 3.8.2.
+- Rapport des vidéos externes YouTube/Vimeo et refus explicite des références vers des fichiers média locaux absents.
+- 49 suites de tests automatisés réussies ; Game Map et H5P.Video testés en Chromium sans réseau.
+- HTML monofichier toujours expérimental ; pas de certification de H5P.InteractiveVideo ni de `file://`.

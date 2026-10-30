@@ -1,4 +1,5 @@
-/* Lot 8.3a : prototype de lecture monofichier expérimental.
+/* Lot 8.3b : résolution des styles Memory, médias locaux et diagnostic hors ligne.
+ * Lot 8.3a : prototype de lecture monofichier expérimental.
  * Résolution virtuelle des fichiers intégrés, sans backend ni CDN à l'exécution.
  * Le runtime s'exécute uniquement dans le document exporté, jamais dans le convertisseur.
  * Ne constitue pas une qualification universelle des H5P ni du protocole file://.
@@ -20,16 +21,61 @@
     return true;
   }
 
+  // Diagnostic statique des médias. Une URL YouTube n'est pas un fichier vidéo
+  // présent dans l'archive H5P : ne jamais annoncer un export vidéo hors ligne.
+  function inspectOfflineMedia(bundle){
+    validate(bundle);
+    const record=bundle.records['h5p/content/content.json'];
+    const externalMedia=[];const missingLocalMedia=[];let localMediaReferences=0;
+    let content;
+    try{
+      const binary=atob(record.base64);const bytes=new Uint8Array(binary.length);
+      for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      content=JSON.parse(new TextDecoder().decode(bytes));
+    }catch(_){return {externalMedia:[],missingLocalMedia:[],localMediaReferences:0,parseError:true};}
+    function scan(item,depth){
+      if(depth>60||externalMedia.length>200)return;
+      if(Array.isArray(item)){for(const v of item)scan(v,depth+1);return;}
+      if(!item||typeof item!=='object')return;
+      if(typeof item.path==='string'){
+        const source=item.path;const mime=String(item.mime||'');
+        const isMedia=/^(?:audio|video)\//i.test(mime)||/\.(?:mp3|m4a|ogg|wav|mp4|m4v|webm|ogv)(?:[?#]|$)/i.test(source);
+        if(isMedia){
+          if(/^(?:https?:)?\/\//i.test(source)){
+            const service=/youtu/i.test(source)?'YouTube':/vimeo/i.test(source)?'Vimeo':'fichier externe';
+            externalMedia.push({service,kind:/^audio\//i.test(mime)?'audio':'video'});
+          }else{
+            const normalized=source.split(/[?#]/)[0].replace(/^(?:\.\/)+/,'');
+            const path=normalized.startsWith('h5p/content/')?normalized:'h5p/content/'+normalized;
+            if(Object.prototype.hasOwnProperty.call(bundle.records,path))localMediaReferences++;
+            else missingLocalMedia.push(path.slice(0,200));
+          }
+        }
+      }
+      for(const v of Object.values(item))scan(v,depth+1);
+    }
+    scan(content,0);
+    const localVideoFiles=Object.keys(bundle.records).filter(x=>/^h5p\/content\//.test(x)&&/\.(?:mp4|webm|m4v|ogv)$/i.test(x)).length;
+    return {externalMedia,missingLocalMedia,localMediaReferences,localVideoFiles,parseError:false};
+  }
+
   // This function is stringified verbatim into the exported HTML.
   // No external script is fetched by the bootstrap itself.
   function playbackRuntime(config){
     'use strict';
     const manifest=document.getElementById('embedded-h5p-resources');
     const status=document.getElementById('singlefile-status');
-    const report={state:'booting',missing:[],assetRequests:0,assetHits:0,scriptErrors:[],runtimeError:null};
+    const bundle=JSON.parse(document.getElementById('embedded-h5p-resources').textContent);
+    const report={state:'booting',missing:[],assetRequests:0,assetHits:0,scriptErrors:[],runtimeError:null,externalRequests:[]};
+    const mediaReport=config.mediaReport||{externalMedia:[],missingLocalMedia:[],localVideoFiles:0};
     window.H5PConverterSinglefileAudit=()=>Object.freeze({
       state:report.state,assetRequests:report.assetRequests,assetHits:report.assetHits,
-      missing:report.missing.slice(0,20),scriptErrors:report.scriptErrors.slice(0,10),runtimeError:report.runtimeError
+      missing:report.missing.slice(0,20),scriptErrors:report.scriptErrors.slice(0,10),runtimeError:report.runtimeError,
+      embeddedVideos:mediaReport.localVideoFiles||0,
+      externalVideos:(mediaReport.externalMedia||[]).filter(v=>v.kind==='video').slice(0,20),
+      missingLocalMedia:(mediaReport.missingLocalMedia||[]).slice(0,20),
+      noExternalMediaDetected:(mediaReport.externalMedia||[]).length===0&&(mediaReport.missingLocalMedia||[]).length===0&&!mediaReport.parseError,
+      externalRequests:report.externalRequests.slice(0,20)
     });
     function setStatus(msg,isError){
       if(!status)return;
@@ -38,7 +84,6 @@
       status.style.color=isError?'#9c2525':'#35485e';
       document.documentElement.dataset.h5pSinglefileStatus=isError?'error':report.state;
     }
-    const bundle=JSON.parse(manifest.textContent);
     const files=bundle.records;
     const nativeFetch=window.fetch?window.fetch.bind(window):null;
     const NativeXHR=window.XMLHttpRequest;
@@ -129,6 +174,7 @@
             report.missing.push(String(url).slice(0,250));
             return Promise.resolve(new Response('Ressource H5P absente',{status:404}));
           }
+          if(typeof url==='string'&&/^https?:\/\//i.test(url)&&report.externalRequests.length<100)report.externalRequests.push(url.slice(0,250));
           return nativeFetch(input,init);
         }
         report.assetRequests++;report.assetHits++;
@@ -183,12 +229,28 @@
       };
       window.XMLHttpRequest.UNSENT=0;window.XMLHttpRequest.OPENED=1;window.XMLHttpRequest.HEADERS_RECEIVED=2;window.XMLHttpRequest.LOADING=3;window.XMLHttpRequest.DONE=4;
     }
-    // URL des ressources assignées par les composants H5P dans le DOM.
+    // Certaines bibliothèques (Memory, par exemple) construisent des balises HTML
+    // et des styles inline sous forme de chaînes. Le parseur HTML n'appelle pas
+    // Element.setAttribute ; un MutationObserver est donc indispensable.
+    const rewriteStyle=value=>String(value).replace(/url\(\s*(['"]?)([^)'"\n]+)\1\s*\)/gi,(whole,q,target)=>{
+      const found=virtualUrl(target);return found?'url("'+found+'")':whole;
+    });
     const originalSetAttribute=Element.prototype.setAttribute;
+    const resourceAttributes=['src','href','poster','data'];
+    const watchedAttributes=[...resourceAttributes,'style'];
+    function rewriteElement(element){
+      if(!element||element.nodeType!==1)return;
+      for(const attribute of watchedAttributes){
+        const current=element.getAttribute(attribute);
+        if(!current)continue;
+        const next=attribute==='style'?rewriteStyle(current):virtualUrl(current);
+        if(next&&next!==current)originalSetAttribute.call(element,attribute,next);
+      }
+    }
     Element.prototype.setAttribute=function(name,value){
-      if(typeof value==='string'&&/^(src|href|poster|data)$/i.test(name)){
-        const replacement=virtualUrl(value);
-        if(replacement)value=replacement;
+      if(typeof value==='string'){
+        if(String(name).toLowerCase()==='style')value=rewriteStyle(value);
+        else if(resourceAttributes.includes(String(name).toLowerCase()))value=virtualUrl(value)||value;
       }
       return originalSetAttribute.call(this,name,value);
     };
@@ -205,28 +267,60 @@
         set:function(value){const replacement=typeof value==='string'&&virtualUrl(value);return desc.set.call(this,replacement||value);}
       });
     }
-    // Certains contenus H5P créent des images SVG avec setAttributeNS.
     const nativeSetAttributeNS=Element.prototype.setAttributeNS;
     Element.prototype.setAttributeNS=function(ns,name,value){
       const isLink=/^(?:xlink:)?href$/i.test(String(name));
       const replacement=isLink&&typeof value==='string'?virtualUrl(value):null;
       return nativeSetAttributeNS.call(this,ns,name,replacement||value);
     };
-    // Images affectées par JS directement à une propriété de style.
-    const rewriteStyle=value=>String(value).replace(/url\(\s*(['"]?)([^)'"\n]+)\1\s*\)/gi,(whole,q,target)=>{
-      const found=virtualUrl(target);return found?'url("'+found+'")':whole;
-    });
     const nativeStyleSetter=CSSStyleDeclaration.prototype.setProperty;
     CSSStyleDeclaration.prototype.setProperty=function(name,value,priority){
       return nativeStyleSetter.call(this,name,typeof value==='string'&&/image|background|mask/i.test(name)?rewriteStyle(value):value,priority);
     };
-    for(const prop of ['backgroundImage','maskImage','borderImageSource','listStyleImage']){
+    for(const prop of ['backgroundImage','maskImage','borderImageSource','listStyleImage','cssText']){
       const desc=Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype,prop);
       if(desc&&desc.configurable&&desc.set&&desc.get){
         Object.defineProperty(CSSStyleDeclaration.prototype,prop,{configurable:true,enumerable:desc.enumerable,
           get:function(){return desc.get.call(this);},set:function(value){return desc.set.call(this,rewriteStyle(value));}});
       }
     }
+    // jQuery.parseHTML() et H5P.MemoryGame.Card produisent du HTML sous forme
+    // de chaînes. Le navigateur peut charger les <img> avant l'insertion dans
+    // le DOM : réécrire les URL AVANT l'appel au parseur HTML.
+    function rewriteInlineHtml(value){
+      if(typeof value!=='string'||!value.includes('h5p/'))return value;
+      let html=value.replace(/\b(src|href|poster|data)\s*=\s*(["'])(.*?)\2/gi,(all,name,quote,target)=>{
+        const resolved=virtualUrl(target);
+        return resolved?name+'='+quote+resolved+quote:all;
+      });
+      // Les cartes Memory contiennent aussi un background-image inline.
+      html=html.replace(/\bstyle\s*=\s*(["'])(.*?)\1/gi,(all,q,style)=>{
+        const replaced=rewriteStyle(style);
+        return replaced!==style?'style='+q+replaced+q:all;
+      });
+      return html;
+    }
+    const innerDescriptor=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');
+    if(innerDescriptor&&innerDescriptor.configurable&&innerDescriptor.set&&innerDescriptor.get){
+      Object.defineProperty(Element.prototype,'innerHTML',{configurable:true,enumerable:innerDescriptor.enumerable,
+        get:function(){return innerDescriptor.get.call(this);},
+        set:function(value){return innerDescriptor.set.call(this,rewriteInlineHtml(value));}});
+    }
+    const nativeInsertHTML=Element.prototype.insertAdjacentHTML;
+    if(nativeInsertHTML)Element.prototype.insertAdjacentHTML=function(position,html){
+      return nativeInsertHTML.call(this,position,rewriteInlineHtml(html));
+    };
+    const observer=new MutationObserver(mutations=>{
+      for(const mutation of mutations){
+        if(mutation.type==='attributes')rewriteElement(mutation.target);
+        for(const node of mutation.addedNodes){
+          if(node.nodeType!==1)continue;
+          rewriteElement(node);
+          if(node.querySelectorAll)for(const descendant of node.querySelectorAll('[src],[href],[poster],[data],[style]'))rewriteElement(descendant);
+        }
+      }
+    });
+    observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:watchedAttributes});
     document.documentElement.lang=config.language||'en';
     // Certains environnements (dont les origines opaques) refusent localStorage.
     // L'HTML simple n'a pas de contrat de persistance LMS : stockage mémoire de secours.
@@ -255,7 +349,12 @@
         };
         if(config.translations)options.translations=config.translations;
         await new H5PStandalone.H5P(document.getElementById('h5p-container'),options);
-        report.state='ready';setStatus('');
+        report.state='ready';
+        if((mediaReport.externalMedia||[]).length){
+          setStatus('Attention : '+mediaReport.externalMedia.length+' média(s) externe(s), notamment YouTube/Vimeo, nécessitent Internet et peuvent être bloqués en ouverture locale. Ces vidéos ne sont pas intégrées dans le fichier H5P. Les vidéos locales MP4/WebM restent embarquées.');
+        }else if((mediaReport.missingLocalMedia||[]).length){
+          setStatus('Attention : '+mediaReport.missingLocalMedia.length+' média(s) locaux sont absents du fichier H5P source.');
+        }else setStatus('');
       }catch(error){
         report.state='error';report.runtimeError=error&&error.message?error.message:String(error);
         setStatus('Ce contenu ne peut pas être lancé dans ce prototype monofichier : '+report.runtimeError+' Utilisez le HTML multifichier.',true);
@@ -267,10 +366,10 @@
   }
   function render({bundle,title='Activité H5P',language='en',translations=null,layoutCss=''}={}){
     validate(bundle);
-    const cfg={language:String(language||'en'),translations};
+    const cfg={language:String(language||'en'),translations,mediaReport:inspectOfflineMedia(bundle)};
     return '<!doctype html>\n<html lang="'+escapeHtml(language||'en')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escapeHtml(title)+'</title><style>html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#222}#h5p-container{width:100%}#singlefile-status{font:14px/1.5 Arial,sans-serif;padding:12px;white-space:pre-wrap}#singlefile-status[hidden]{display:none}'+String(layoutCss||'')+'</style></head><body><div id="singlefile-status" role="status">Initialisation du monofichier expérimental…</div><div id="h5p-container"></div><script id="embedded-h5p-resources" type="application/json">'+safeJson(bundle)+'</script><script>('+playbackRuntime.toString()+')('+safeJson(cfg)+');</script></body></html>';
   }
-  const api=Object.freeze({validate,render,MAX_BYTES,MUST_HAVE});
+  const api=Object.freeze({validate,render,inspectOfflineMedia,MAX_BYTES,MUST_HAVE});
   const mods=root.H5PConverterModules||(root.H5PConverterModules={});
   mods.htmlSinglefilePlayer=api;
   if(typeof module==='object'&&module.exports)module.exports=api;

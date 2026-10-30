@@ -981,6 +981,13 @@
         onProgress:({percent})=>setGenerationProgress(40+Math.round(percent*0.45),'Intégration des ressources locales')
       });
       setGenerationProgress(88,'Assemblage du document interactif');
+      const mediaAudit=modules.htmlSinglefilePlayer.inspectOfflineMedia(bundle);
+      if(mediaAudit.externalMedia.length){
+        logLine(`Attention : ${mediaAudit.externalMedia.length} média(s) externes (YouTube ou autre hébergement) ne seront PAS disponibles hors ligne. Les vidéos YouTube ne sont pas incluses dans le H5P.`);
+      }
+      if(mediaAudit.missingLocalMedia.length){
+        throw new Error(`${mediaAudit.missingLocalMedia.length} média(s) locaux manquants dans le H5P : export monofichier expérimental refusé. Utilisez le HTML multifichier.`);
+      }
       const html=modules.htmlSinglefilePlayer.render({
         bundle,title,language,translations:coreTranslationsFor(language),
         layoutCss:exportLayout.css(selectedLayout())

@@ -26,6 +26,14 @@ Le bouton « HTML monofichier interactif (essai) » génère un fichier `.html` 
 
 La génération monofichier n'envoie aucun score SCORM ou LMS. Les essais Chromium utilisent un document injecté dans un contexte navigateur, **et ne constituent pas une certification `file://` ou HTTP(S)**. Consulter `docs/LOT8_3_PREMIER_LECTEUR_MONOFICHIER.md` et `docs/CONTRE_RECETTE_LOT8_3.md`.
 
+## Lot 8.3b : images Memory et médias locaux (30 octobre 2026)
+
+Le lecteur monofichier expérimental intercepte désormais également les URLs générées dans des chaînes HTML par certaines bibliothèques telles que H5P.MemoryGame. Les images internes ont été testées avec la Game Map réelle : trois échecs de ressources ont disparu après correction.
+
+Un MP4 réellement contenu dans le H5P a été lu dans H5P.Video en Chromium sans accès réseau. Le nouveau diagnostic de médias distingue les fichiers locaux et les vidéos externes (dont YouTube), qui ne sont pas embarquées et nécessitent Internet. Un média local déclaré mais manquant provoque un refus explicite de l'export expérimental.
+
+**Réserves :** `file://` reste à qualifier en recette réelle ; H5P.InteractiveVideo avec vidéo locale n'a pas été testé. Les vidéos YouTube ne deviennent pas hors ligne et peuvent être bloquées suivant l'origine du document. Le format reste expérimental. Voir `docs/LOT8_3B_IMAGES_MEDIAS.md` et `docs/CONTRE_RECETTE_LOT8_3B.md`.
+
 ## Fonctionnalités de la V1
 
 - sélection classique ou glisser-déposer d'un fichier `.h5p` ;
