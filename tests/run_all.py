@@ -78,6 +78,7 @@ def main() -> int:
         ("syntaxe-module-presentation", [node, "--check", "src/export-layout.js"] if node else None),
         ("lanceur-html-multifichier", [node, "tests/html-multifile7.mjs"] if node else None),
         ("syntaxe-module-html", [node, "--check", "src/html-multifile.js"] if node else None),
+        ("ui-generation-et-apercu-85c", [node, "tests/ui85c_contract.mjs"] if node else None),
         ("archive-source", [sys.executable, "tests/verify_baseline_archive.py"]),
     ]
     results = []

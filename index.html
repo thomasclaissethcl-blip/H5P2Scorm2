@@ -209,6 +209,7 @@
 </div>
 </div>
 <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le bouton « HTML monofichier interactif (essai) » crée une version expérimentale avec lecteur embarqué, sans garantie pour tous les types H5P. En cas d’incompatibilité, utilisez le HTML multifichier. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
+<div id="uiGenerationLocation"><div id="generationInline">
 <div class="generation-progress" hidden="" id="generationProgressWrap">
 <div class="generation-progress-head">
 <span id="generationProgressPhase">Génération</span>
@@ -216,8 +217,15 @@
 </div>
 <progress id="generationProgress" max="100" value="0">0 %</progress>
 </div>
+<div class="generation-result" hidden id="uiGenerationResult" role="status" aria-live="polite">
+  <strong id="uiGenerationResultTitle">Contenu généré</strong>
+  <p id="uiGenerationResultText">Le téléchargement a été déclenché.</p>
+  <button class="button primary" id="uiGenerationOK" type="button">OK</button>
+</div>
 <div class="inline-label">Journal de génération <button aria-expanded="false" aria-label="Aide sur le journal de génération" class="help" data-help="Ce journal concerne uniquement la conversion. Il n'affiche pas les sauvegardes de progression effectuées ensuite dans l'activité SCORM." type="button">?</button></div>
+
 <pre aria-live="polite" class="log" id="log"></pre>
+</div></div>
 </section><details class="ui-detail" id="uiCompatibility"><summary>Compatibilité, limites et détails techniques</summary><div class="ui-detail-body"></div><section class="panel notes notes-legacy">
 <div class="section-title">
 <div>
@@ -236,6 +244,12 @@
 </section></details></section>
 </main><aside aria-label="Contexte de la conversion" class="panel inspector"><h2>Vue d’ensemble</h2><div class="inspector-block"><p class="inspector-block-title">Fichier source</p><div class="summary-card"><strong id="uiSummaryFile">Aucun H5P chargé</strong><p id="uiSummaryMeta">Sélectionnez un fichier pour commencer.</p></div></div><div class="inspector-block"><p class="inspector-block-title">Analyse et compatibilité</p><p class="summary-card" id="uiSummaryDiagnostic">En attente d’un fichier H5P.</p></div><div class="inspector-block"><p class="inspector-block-title">Export</p><div class="summary-card"><strong id="uiSummaryFormat">SCORM 1.2</strong><p id="uiSummaryReady">Importez un H5P valide pour activer l’export.</p></div></div><p class="inspector-foot">Le contenu H5P et vos styles sont traités localement. Le lecteur H5P est récupéré lors de la conversion, puis embarqué dans l’export.</p></aside></div>
 </div>
+<dialog aria-labelledby="uiGenerationDialogTitle" aria-modal="true" class="generation-dialog" id="uiGenerationDialog">
+  <div class="generation-dialog-inner">
+    <div class="generation-dialog-heading"><p class="eyebrow">Export du contenu H5P</p><h2 id="uiGenerationDialogTitle">Génération en cours</h2><p id="uiGenerationDialogHint">La progression et le journal sont affichés pendant la conversion.</p></div>
+    <div id="uiGenerationDialogContent"></div>
+  </div>
+</dialog>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="src/runtime-profiles.js"></script>
 <script src="src/engine-catalog.js"></script>

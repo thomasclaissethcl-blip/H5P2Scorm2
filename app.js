@@ -844,6 +844,9 @@
       generating = false;
       generateBtn.disabled = !state.analysis?.ok || !engineCatalog.canExportWithPreview(state.previewProfileId);
       generateHtmlBtn.disabled = generateBtn.disabled;
+      document.dispatchEvent(new CustomEvent('h5p-converter-generation-finished', {
+        detail: { format:'scorm', success:generationProgress.value >= 100 }
+      }));
     }
   }
 
@@ -921,6 +924,9 @@
       generating=false;
       const permitted=Boolean(state.analysis?.ok&&engineCatalog.canExportWithPreview(state.previewProfileId));
       for(const b of [singlefileInteractiveBtn,generateBtn,generateHtmlBtn])b.disabled=!permitted;
+      document.dispatchEvent(new CustomEvent('h5p-converter-generation-finished', {
+        detail: { format:'single', success:generationProgress.value >= 100 }
+      }));
     }
   }
 
@@ -995,6 +1001,9 @@
       const permitted=Boolean(state.analysis?.ok&&engineCatalog.canExportWithPreview(state.previewProfileId));
       generateHtmlBtn.disabled=!permitted;
       generateBtn.disabled=!permitted;
+      document.dispatchEvent(new CustomEvent('h5p-converter-generation-finished', {
+        detail: { format:'multi', success:generationProgress.value >= 100 }
+      }));
     }
   }
 
@@ -1074,6 +1083,13 @@
   el('cssText').addEventListener('input', () => {
     clearTimeout(cssDebounce);
     cssDebounce = setTimeout(updatePreviewCss, 180);
+  });
+  // Lorsque l'interface affiche l'aperçu préchargé, demander au véritable
+  // iframe isolé le recalcul des dimensions de Game Map et de ses hotspots.
+  window.addEventListener('h5p-converter-preview-visible', () => {
+    preview.notifyResize();
+    setTimeout(() => preview.notifyResize(), 120);
+    setTimeout(() => preview.notifyResize(), 350);
   });
   el('previewRestart').addEventListener('click', () => { void launchPreview(); });
   const previewViewport = el('previewViewport');

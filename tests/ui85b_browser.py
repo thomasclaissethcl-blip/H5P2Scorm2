@@ -63,6 +63,10 @@ with sync_playwright() as pw:
         page.locator(f'input[name="uiExportFormat"][value="{name}"]').check()
         page.locator('#uiGeneratePrimary').click()
         assert page.evaluate('window.__clicked.slice(-1)[0]')==target,name
+        assert page.locator('#uiGenerationDialog').evaluate('(e)=>e.open')
+        page.evaluate("document.dispatchEvent(new CustomEvent('h5p-converter-generation-finished',{detail:{success:true}}))")
+        page.locator('#uiGenerationOK').click()
+        assert not page.locator('#uiGenerationDialog').evaluate('(e)=>e.open')
     page.screenshot(path='/mnt/data/ui85b_real_export_dark.png',full_page=True)
     page.locator('#themeToggle').click()
     assert page.locator('html').get_attribute('data-theme')=='light'

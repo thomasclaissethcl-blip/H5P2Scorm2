@@ -144,3 +144,9 @@ Première version stable centrée sur Moodle et SCORM 1.2.
 - Rapport des vidéos externes YouTube/Vimeo et refus explicite des références vers des fichiers média locaux absents.
 - 49 suites de tests automatisés réussies ; Game Map et H5P.Video testés en Chromium sans réseau.
 - HTML monofichier toujours expérimental ; pas de certification de H5P.InteractiveVideo ni de `file://`.
+
+## Lot 8.5c : fenêtre de génération et rafraîchissement de l’aperçu
+
+- Suivi modal de la génération avec message de fin et restitution du journal dans la page.
+- Notification de redimensionnement de la visionneuse H5P lors du retour à l’étape Aperçu et synchronisation de la largeur d’initialisation hors écran.
+- Aucune modification des exportateurs, de la notation et des ressources exportées.

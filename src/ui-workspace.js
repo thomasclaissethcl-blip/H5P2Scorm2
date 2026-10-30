@@ -19,6 +19,65 @@
   const scormOptions = byId('scormOptionsPanel');
   const diagnostic = byId('diagnostic');
   const progress = byId('generationProgressWrap');
+  const mainPanel = byId('mainContent');
+  const previewView = byId('view-preview');
+  const dialog = byId('uiGenerationDialog');
+  const dialogContent = byId('uiGenerationDialogContent');
+  const generationHome = byId('uiGenerationLocation');
+  const generationInline = byId('generationInline');
+  const generationResult = byId('uiGenerationResult');
+  const generationOK = byId('uiGenerationOK');
+  let generationDialogActive = false;
+  let generationDone = false;
+  let dialogReturnFocus = null;
+  // L'iframe est initialisée alors que l'étape Aperçu est hors écran. Lui
+  // donner les mêmes dimensions que la colonne centrale avant son affichage.
+  function syncHiddenPreviewWidth() {
+    if (!previewView?.hidden || !mainPanel) return;
+    const box = mainPanel.getBoundingClientRect();
+    const style = getComputedStyle(mainPanel);
+    const width = box.width - parseFloat(style.paddingLeft || '0') - parseFloat(style.paddingRight || '0');
+    if (width > 0) previewView.style.width = Math.round(width) + 'px';
+  }
+  function signalVisiblePreview() {
+    window.dispatchEvent(new CustomEvent('h5p-converter-preview-visible'));
+  }
+  function openGenerationDialog() {
+    if (!dialog || !generationInline || !dialogContent || generationDialogActive) return;
+    generationDialogActive = true;
+    generationDone = false;
+    dialogReturnFocus = document.activeElement;
+    generationResult.hidden = true;
+    byId('uiGenerationDialogTitle').textContent = 'Génération en cours';
+    dialogContent.appendChild(generationInline);
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+  function closeGenerationDialog() {
+    if (!generationDialogActive || !generationDone) return;
+    generationDialogActive = false;
+    generationResult.hidden = true;
+    generationHome.appendChild(generationInline);
+    if (typeof dialog.close === 'function') dialog.close();
+    else dialog.removeAttribute('open');
+    const previous = dialogReturnFocus;
+    dialogReturnFocus = null;
+    if (previous?.isConnected && !previous.disabled) previous.focus({preventScroll:true});
+  }
+  dialog?.addEventListener('cancel', event => event.preventDefault());
+  generationOK?.addEventListener('click', closeGenerationDialog);
+  document.addEventListener('h5p-converter-generation-finished', event => {
+    if (!generationDialogActive) return;
+    generationDone = true;
+    const success = event.detail?.success === true;
+    byId('uiGenerationDialogTitle').textContent = success ? 'Génération terminée' : 'Génération non aboutie';
+    byId('uiGenerationResultTitle').textContent = success ? 'Contenu généré' : 'Échec de la génération';
+    byId('uiGenerationResultText').textContent = success
+      ? 'Le téléchargement a été déclenché. Cliquez sur OK pour retrouver le suivi dans la page.'
+      : 'Consultez le journal ci-dessous pour connaître la cause de l’échec.';
+    generationResult.hidden = false;
+    generationOK.focus({preventScroll:true});
+  });
   const fileInput = byId('h5pFile');
   const help = byId('uiHelp');
   const tech = byId('uiTechnical');
@@ -36,12 +95,13 @@
       view.classList.toggle('active', active);
     });
     if (name === 'preview') {
-      // Game Map et autres bibliothèques H5P calculent leur surface à partir
-      // des dimensions du cadre : notifier le changement après navigation.
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new Event('resize'));
-        try { byId('previewFrame')?.contentWindow?.dispatchEvent(new Event('resize')); } catch (_error) { /* sandbox opaque */ }
-      });
+      // Ne pas conserver la largeur fixe utilisée pour le préchargement caché.
+      previewView.style.removeProperty('width');
+      // L'iframe sandbox a une origine opaque : app.js transmettra le
+      // recalcul par son canal postMessage, après la mise en page effective.
+      requestAnimationFrame(() => requestAnimationFrame(signalVisiblePreview));
+    } else {
+      syncHiddenPreviewWidth();
     }
     if (focusHeading) {
       const heading = byId('title-' + name);
@@ -97,6 +157,7 @@
   primary.addEventListener('click', () => {
     const target = buttons[format()];
     if (!target || target.disabled) { updateSummary(); return; }
+    openGenerationDialog();
     target.click();
     // Les actions longues sont exécutées dans app.js. Ne pas simuler de succès.
   });
@@ -120,6 +181,10 @@
     if (details) { details.open = true; details.scrollIntoView({block: 'nearest'}); }
   });
   // Ne pas perturber les propriétés de l'iframe, les états SCORM ni la progression du moteur.
+  window.addEventListener('resize', () => {
+    if (previewView?.hidden) syncHiddenPreviewWidth();
+    else requestAnimationFrame(signalVisiblePreview);
+  });
   updateFormat();
   showView('import', false);
 })();
