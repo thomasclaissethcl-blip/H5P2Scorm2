@@ -982,12 +982,23 @@
       });
       setGenerationProgress(88,'Assemblage du document interactif');
       const mediaAudit=modules.htmlSinglefilePlayer.inspectOfflineMedia(bundle);
-      if(mediaAudit.externalMedia.length){
-        logLine(`Attention : ${mediaAudit.externalMedia.length} média(s) externes (YouTube ou autre hébergement) ne seront PAS disponibles hors ligne. Les vidéos YouTube ne sont pas incluses dans le H5P.`);
+      const videoExternes=(mediaAudit.externalMedia||[]).filter(v=>v.kind==='video');
+      const youtubeCount=videoExternes.filter(v=>v.service==='YouTube').length;
+      logLine(`Diagnostic monofichier : ${(mediaAudit.localVideoFiles||0)} fichier(s) vidéo local(aux) embarqué(s), ${(mediaAudit.localMediaReferences||0)} référence(s) locale(s) audio/vidéo, ${videoExternes.length} vidéo(s) externe(s).`);
+      if(youtubeCount){
+        logLine(`Compatibilité YouTube : ${youtubeCount} vidéo(s) distante(s) nécessitent Internet. Lecture intégrée vérifiée sur un hébergement HTTPS ; lecture en ouverture directe file:// susceptible d'échouer (référent HTTP absent / erreur 153). Les vidéos YouTube ne sont pas intégrées au fichier.`);
+      }
+      if((mediaAudit.externalMedia||[]).length>youtubeCount){
+        logLine(`Attention : ${(mediaAudit.externalMedia||[]).length-youtubeCount} autre(s) média(s) externe(s) nécessitent Internet et ne sont pas inclus dans le monofichier.`);
+      }
+      if(mediaAudit.parseError){
+        logLine('Attention : diagnostic des médias incomplet, analyse JSON du contenu impossible. Vérifier le H5P exporté avant diffusion.');
       }
       if(mediaAudit.missingLocalMedia.length){
+        logLine(`Refus : ${mediaAudit.missingLocalMedia.length} fichier(s) audio/vidéo local(aux) absent(s) du H5P.`);
         throw new Error(`${mediaAudit.missingLocalMedia.length} média(s) locaux manquants dans le H5P : export monofichier expérimental refusé. Utilisez le HTML multifichier.`);
       }
+      logLine('Note de portabilité : les bibliothèques, styles et médias locaux inclus ne nécessitent pas de réseau ; les médias externes dépendent de leur fournisseur et des règles de sécurité du navigateur.');
       const html=modules.htmlSinglefilePlayer.render({
         bundle,title,language,translations:coreTranslationsFor(language),
         layoutCss:exportLayout.css(selectedLayout())

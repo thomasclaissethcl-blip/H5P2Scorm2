@@ -71,6 +71,7 @@ def main() -> int:
         ("prototype-interactif-monofichier-8-3", [node, "tests/html-singlefile-player83.mjs"] if node else None),
         ("medias-images-monofichier-8-3b", [node, "tests/html-singlefile-media83b.mjs"] if node else None),
         ("youtube-referrer-monofichier-8-3c", [node, "tests/html-singlefile-youtube83c.mjs"] if node else None),
+        ("experience-apprenant-et-journal-8-4a", [node, "tests/html-singlefile-clean84.mjs"] if node else None),
         ("syntaxe-lecteur-monofichier-8-3", [node, "--check", "src/html-singlefile-player.js"] if node else None),
         ("syntaxe-conteneur-ressources-8-2", [node, "--check", "src/html-singlefile-resources.js"] if node else None),
         ("pre-diagnostic-monofichier-8-1", [node, "tests/html-singlefile-preflight81.mjs"] if node else None),
@@ -104,7 +105,7 @@ def main() -> int:
     report = {
         "schema_version": 1,
         "date_utc": datetime.now(timezone.utc).isoformat(),
-        "scope": "Lot 8.3c : H5P Video YouTube - avertissement file:// et référent HTTP(S) ; lecture réelle YouTube à qualifier",
+        "scope": "Lot 8.4a : avertissements techniques au journal, aucun message dans le rendu normal ; qualification Interactive Book hors réseau",
         "python": platform.python_version(),
         "node": None,
         "summary": {"passed": success, "failed": len(results) - success, "total": len(results)},

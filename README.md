@@ -177,3 +177,11 @@ Avant toute mise à jour du runtime H5P, lire `MAINTENANCE_MANIFEST.md` et `RUNT
 ## Composants tiers
 
 Voir `THIRD_PARTY_NOTICES.md`.
+
+## Lot 8.4a : HTML monofichier expérimental
+
+Le journal du convertisseur contient désormais les avertissements techniques relatifs aux médias externes ; ils ne sont plus affichés dans la page pédagogique après l'ouverture normale de l'activité. Un message bref subsiste uniquement en cas d'échec de lancement. Les métadonnées et le diagnostic restent accessibles via `window.H5PConverterSinglefileAudit()` pour le débogage.
+
+La lecture de sources YouTube dans un `.html` ouvert par `file://` ne peut pas être garantie : le service attend un référent HTTP ou une identification de client équivalente. Un hébergement HTTPS compatible permet la lecture lorsque YouTube autorise l'intégration. Les vidéos locales MP4/WebM réellement intégrées au H5P restent candidates à un fonctionnement hors ligne.
+
+Un premier test hors réseau d'Interactive Book SST406 a réussi dans Chromium (ouverture du chapitre 1). Ce résultat n'équivaut pas à la certification de l'ensemble du livre ou à une validation universelle de H5P Interactive Book.

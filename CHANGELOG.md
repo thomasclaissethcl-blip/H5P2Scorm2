@@ -1,5 +1,14 @@
 # Changelog
 
+## Lot 8.4a : présentation neutre et premier essai Interactive Book (30 octobre 2026)
+
+- Aucun avertissement technique (notamment YouTube/file://) ne s'affiche dans le contenu HTML monofichier lorsqu'il est lancé normalement. Les erreurs empêchant le lancement conservent un message succinct.
+- Le journal du convertisseur présente les comptes de vidéos locales, les sources externes, la limitation de YouTube en file:// et les réserves hors ligne. Le diagnostic `H5PConverterSinglefileAudit()` demeure accessible pour analyse technique.
+- Maintien de la politique de référent `strict-origin-when-cross-origin` pour les pages HTTPS contenant YouTube, sans contournement des restrictions du fournisseur.
+- Premier essai d'un vrai H5P.InteractiveBook (SST406) en HTML unique, construit depuis le contenu H5P d'une archive SCORM fournie pour recette : 772 fichiers et 20 026 849 octets embarqués. Chromium hors réseau : lecteur initialisé, ouverture du premier chapitre, aucune erreur JavaScript ni ressource manquante observée dans ce scénario.
+- Le livre complet, les soumissions de questionnaires et l'ouverture en Firefox file:// restent à qualifier par l'utilisateur. H5P.InteractiveVideo local reste à qualifier séparément.
+- 51/51 contrôles automatisés et test Chromium additionnel du livre réel réussis ; aucune modification du SCORM ni de l'export HTML multifichier.
+
 ## Lot 8.3a : premier lecteur H5P HTML monofichier interactif (essai, 29 octobre 2026)
 
 - Résolveur autonome des ressources H5P intégrées, incluant fetch, XMLHttpRequest, scripts dynamiques, feuilles CSS, images et polices.

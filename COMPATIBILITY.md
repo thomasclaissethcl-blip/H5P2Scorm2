@@ -30,3 +30,15 @@ Le plafond est une déclaration maintenue par le projet et doit être réévalu�
 - Drag and Drop ;
 - Fill in the Blanks ;
 - un second LMS SCORM 1.2.
+
+## HTML monofichier expérimental, lot 8.4a
+
+| Contenu | Résultat observé | Limite |
+| --- | --- | --- |
+| H5P.Video, MP4 local | Chargement vidéo démontré dans Chromium, hors réseau | Firefox et autres navigateurs à confirmer |
+| H5P.Video, YouTube | Lecture rapportée par l'utilisateur sur Moodle en ligne | Ouverture locale `file://` non garantie, Internet indispensable |
+| Game Map avec Memory | Images corrigées et recette utilisateur positive sur les scénarios testés | Tous les médias externes ne sont pas autonomes |
+| Interactive Book SST406 | Chapitre 1 ouvert et interface initialisée dans Chromium hors réseau | Exercices, scores et fin du livre non entièrement testés |
+| Interactive Video avec MP4 local | Non qualifié | Corpus de recette spécifique encore nécessaire |
+
+Les avertissements techniques du monofichier sont uniquement dans le journal de génération. Les erreurs fatales restent visibles afin d'éviter une page blanche inexpliquée.

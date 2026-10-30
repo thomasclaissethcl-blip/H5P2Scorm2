@@ -46,6 +46,6 @@ assert(html.includes('HTMLVideoElement'));
 assert(html.includes('HTMLSourceElement'));
 assert(!html.includes('<script src="https://'));
 assert(app.includes('htmlSinglefilePlayer.inspectOfflineMedia(bundle)'));
-assert(app.includes('média(s) externes'));
+assert(app.includes('Diagnostic monofichier') && app.includes('vidéo(s) externe(s)'));
 assert.equal(player.inspectOfflineMedia(make({sources:[{path:'videos/offline.webm',mime:'video/webm'}]}, {'h5p/content/videos/offline.webm':record(Buffer.from([1]),'video/webm')})).externalMedia.length,0);
 console.log('Lot 8.3b : diagnostics médias externes/manquants, images Memory et vidéo locale : OK');
