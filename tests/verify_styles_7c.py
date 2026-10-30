@@ -1,17 +1,15 @@
-#!/usr/bin/env python3
-"""Autorise uniquement deux ajouts de grille pour afficher les quatre champs 7c."""
 from pathlib import Path
-import hashlib,json
+import hashlib
 root=Path(__file__).resolve().parents[1]
-reference=(root/'tests/fixtures/styles-lot7b.css').read_bytes()
-manifest=json.loads((root/'tests/fixtures/lot53-protected-components.json').read_text())
-assert hashlib.sha256(reference).hexdigest()==manifest['protectedFiles']['styles.css'],'La référence 7b n est pas celle du gel 5.3'
-source=reference.decode('utf-8')
-old='.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }'
-assert source.count(old)==1
-source=source.replace(old,old+'\n.grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }')
-old='.grid.two, .grid.three { grid-template-columns: 1fr; }'
-assert source.count(old)==1
-source=source.replace(old,'.grid.two, .grid.three, .grid.four { grid-template-columns: 1fr; }')
-assert (root/'styles.css').read_text(encoding='utf-8')==source,'Régression CSS : styles.css diffère des deux ajouts 7c strictement autorisés'
-print('Lot 7c : styles.css = référence 5.3/7b + deux seuls changements de grille contrôlés')
+styles=(root/'styles.css').read_text(encoding='utf-8')
+# Historic 7c CSS is still an exact prefix: the 8.5b UI adds a self-contained
+# SCORM Studio design-system layer AFTER it, without changing preview/fullscreen rules.
+marker='\n\n/* UI 8.5b : design system SCORM Studio v6 et parcours validé */\n'
+assert marker in styles,'Nouvelle couche de theme absente'
+old,new=styles.split(marker,1)
+# Frozen SHA-256 of the original 8.4b CSS (after the two authorized 7c adjustments).
+EXPECTED='ab0c35c366235d82ee18a5f6688183d9e79687e193502a61e719541c5ab490fa'
+assert hashlib.sha256(old.encode()).hexdigest()==EXPECTED,'Régression dans les règles CSS historiques'
+assert '--accent:#75e0ca' in new and '--accent:#087e70' in new,'Tokens de la charte manquants'
+assert 'preview-viewport:fullscreen' in old and 'preview-viewport.preview-is-expanded' in old,'Plein écran H5P manquant'
+print('Socle CSS historique protégé ; couche UI 8.5b autorisée : OK')

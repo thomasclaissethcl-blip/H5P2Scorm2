@@ -1,268 +1,258 @@
 <!doctype html>
-<html lang="fr">
+<html data-theme="dark" lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>H5P Converter : SCORM 1.2 et HTML multifichier - Version 1.0.1</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <main class="shell">
-    <header class="hero">
-      <div class="hero-meta">
-        <p class="eyebrow">Version 1.0.1</p>
-        <span class="privacy-pill">Traitement local dans le navigateur</span>
-      </div>
-      <h1>H5P vers SCORM 1.2 et HTML multifichier</h1>
-      <p>Convertit un fichier H5P en paquetage SCORM 1.2 avec suivi pédagogique, ou en mini-site HTML multifichier autonome pour un hébergement web statique compatible. La localisation et le CSS personnalisé sont disponibles pour les deux formats.</p>
-    </header>
-
-    <section class="panel">
-      <div class="section-title">
-        <div>
-          <p class="step">Étape 1</p>
-          <h2>Source H5P <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la source H5P" data-help="Le fichier est lu et analysé directement dans votre navigateur. Il n'est pas envoyé par l'application vers un serveur.">?</button></h2>
-        </div>
-      </div>
-
-      <label id="h5pDropZone" class="file-drop" for="h5pFile">
-        <input id="h5pFile" type="file" accept=".h5p,.zip,application/zip">
-        <span class="drop-icon" aria-hidden="true">H5P</span>
-        <span id="dropFileName" class="drop-title">Glissez-déposez un fichier .h5p ici</span>
-        <span class="drop-subtitle">ou cliquez pour le sélectionner</span>
-        <span class="drop-help">Formats acceptés : .h5p et archive .zip structurée comme un H5P</span>
-      </label>
-      <div class="inline-label">Fichier sélectionné <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le fichier sélectionné" data-help="Le nom et la taille du fichier apparaissent ici. L'analyse démarre automatiquement après la sélection ou le dépôt.">?</button></div>
-      <div id="fileMeta" class="muted">Aucun fichier chargé.</div>
-    </section>
-
-    <section class="panel">
-      <div class="section-title">
-        <div>
-          <p class="step">Étape 2</p>
-          <h2>Apparence <button type="button" class="help" aria-expanded="false" aria-label="Aide sur l'apparence" data-help="Les styles personnalisés sont ajoutés après les styles H5P afin de pouvoir les surcharger. Les règles CSS importées et saisies sont concaténées.">?</button></h2>
-        </div>
-      </div>
-
-      <div class="grid two">
-        <div class="field">
-          <label for="cssFile">Fichier CSS facultatif <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le fichier CSS" data-help="Importez un fichier .css si votre charte existe déjà. Son contenu sera intégré dans les exports SCORM et HTML.">?</button></label>
-          <input id="cssFile" type="file" accept=".css,text/css">
-        </div>
-        <div class="field-note">
-          <div class="field-note-title">Ordre d'application <button type="button" class="help" aria-expanded="false" aria-label="Aide sur l'ordre d'application du CSS" data-help="La surcouche personnalisée est chargée après les styles du lecteur H5P et des bibliothèques. Certaines règles H5P très spécifiques peuvent toutefois nécessiter des sélecteurs plus précis.">?</button></div>
-          <span>Les styles personnalisés sont chargés en dernier pour faciliter les surcharges.</span>
-        </div>
-      </div>
-
-      <div class="grid two">
-        <div class="field">
-          <label for="layoutMaxWidth">Largeur maximale du contenu (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la largeur du contenu" data-help="Largeur maximale du conteneur H5P dans les exports SCORM et HTML. Le contenu est centré automatiquement ; sur les petits écrans, sa largeur diminue pour rester visible. Laissez vide pour utiliser toute la largeur disponible.">?</button></label>
-          <input id="layoutMaxWidth" type="number" min="1" max="10000" step="1" inputmode="numeric" placeholder="Automatique, ex. 960">
-        </div>
-        <div class="field-note">
-          <div class="field-note-title">Marges ordinateur (à partir de 769 px)</div>
-          <span>Réglez séparément le haut, le bas, la gauche et la droite. Un champ vide laisse ce côté inchangé ; 0 supprime l'espace ajouté.</span>
-        </div>
-      </div>
-      <div class="grid four">
-        <div class="field"><label for="layoutMarginTop">Marge haute (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge haute" data-help="Espace au-dessus de l’activité. Laisser vide pour ne rien ajouter ; 0 pour une marge nulle.">?</button></label><input id="layoutMarginTop" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 20"></div>
-        <div class="field"><label for="layoutMarginBottom">Marge basse (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge basse" data-help="Espace sous l’activité. Laisser vide pour ne rien ajouter ; 0 pour une marge nulle.">?</button></label><input id="layoutMarginBottom" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 20"></div>
-        <div class="field"><label for="layoutMarginLeft">Marge gauche (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge gauche" data-help="Espace à gauche du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive.">?</button></label><input id="layoutMarginLeft" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 24"></div>
-        <div class="field"><label for="layoutMarginRight">Marge droite (px) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la marge droite" data-help="Espace à droite du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive.">?</button></label><input id="layoutMarginRight" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="Ex. 24"></div>
-      </div>
-      <div class="field-note" style="margin-top:16px"><div class="field-note-title">Marges mobile (768 px et moins)</div><span>Les marges ordinateur sont remplacées par ces quatre valeurs sur écran étroit. Par défaut : 0 px de chaque côté. Un champ mobile vide vaut également 0.</span></div>
-      <div class="grid four">
-        <div class="field"><label for="mobileMarginTop">Marge haute mobile (px)</label><input id="mobileMarginTop" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label for="mobileMarginBottom">Marge basse mobile (px)</label><input id="mobileMarginBottom" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label for="mobileMarginLeft">Marge gauche mobile (px)</label><input id="mobileMarginLeft" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label for="mobileMarginRight">Marge droite mobile (px)</label><input id="mobileMarginRight" type="number" min="0" max="2000" step="1" inputmode="numeric" placeholder="0"></div>
-      </div>
-      <p class="muted">Réglages facultatifs communs aux exports SCORM et HTML. Les marges ordinateur sont appliquées à partir de 769 px ; les marges mobile s'appliquent jusqu'à 768 px et valent 0 par défaut. La largeur maximale reste commune et centrée. Le plein écran H5P reste indépendant.</p>
-
-      <div class="field">
-        <label for="cssText">CSS intégré <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le CSS intégré" data-help="Ajoutez ou modifiez ici des règles CSS. Elles s'ajoutent au fichier CSS éventuellement importé. Laissez vide si aucune surcouche n'est souhaitée.">?</button></label>
-        <textarea id="cssText" rows="10" spellcheck="false">/* Exemple de surcouche */
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>H5P Converter | SCORM 1.2 et HTML autonomes</title>
+<link href="styles.css" rel="stylesheet"/>
+<meta content="#0a1020" name="theme-color"/></head>
+<body><svg aria-hidden="true" class="svg-library" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-layers" viewbox="0 0 24 24"><rect height="6" rx="1.5" width="18" x="3" y="3"></rect><rect height="5" rx="1.5" width="18" x="3" y="10"></rect><rect height="5" rx="1.5" width="18" x="3" y="16"></rect></symbol>
+<symbol id="i-upload" viewbox="0 0 24 24"><path d="M12 16V3m-4 4 4-4 4 4"></path><path d="M4 15v5h16v-5"></path></symbol>
+<symbol id="i-eye" viewbox="0 0 24 24"><path d="M2 12S5.5 5.5 12 5.5 22 12 22 12 18.5 18.5 12 18.5 2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+<symbol id="i-settings" viewbox="0 0 24 24"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="2"></circle><circle cx="16" cy="17" r="2"></circle></symbol>
+<symbol id="i-download" viewbox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"></path></symbol>
+<symbol id="i-moon" viewbox="0 0 24 24"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"></path></symbol>
+<symbol id="i-sun" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></symbol>
+<symbol id="i-help" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3h.01"></path></symbol>
+<symbol id="i-file" viewbox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"></path><path d="M14 2v6h5"></path></symbol>
+<symbol id="i-shield" viewbox="0 0 24 24"><path d="m12 2 8 4v7c0 5-4 8-8 9-4-1-8-4-8-9V6z"></path><path d="m9 12 2 2 4-4"></path></symbol>
+</svg><div class="app-shell">
+<header class="topbar"><div class="branding"><div class="brand-icon"><svg class="ui-icon"><use href="#i-layers"></use></svg></div><div class="brand-copy"><strong>H5P Converter</strong><small>Conversion H5P vers SCORM 1.2 et HTML autonome</small></div></div><div class="topbar-actions"><span class="app-status"><span class="status-dot"></span>Traitement local dans le navigateur</span><span class="release-version">Version 1.0.1</span><button aria-label="Passer au thème clair" class="icon-button" id="themeToggle" title="Passer au thème clair" type="button"><svg class="ui-icon"><use href="#i-sun"></use></svg></button></div></header>
+<div class="workspace"><aside class="panel rail"><p class="eyebrow">Votre parcours</p><h2>Préparer une conversion</h2><nav aria-label="Sections du convertisseur"><ol class="nav-list">
+<li><button aria-current="step" class="nav-button" data-view="import" type="button"><span class="nav-index">01</span><span class="nav-text"><span class="nav-title">Importer</span><span class="nav-sub">Fichier H5P et analyse</span></span></button></li>
+<li><button class="nav-button" data-view="preview" type="button"><span class="nav-index">02</span><span class="nav-text"><span class="nav-title">Prévisualiser</span><span class="nav-sub">Lecture et contrôles</span></span></button></li>
+<li><button class="nav-button" data-view="customize" type="button"><span class="nav-index">03</span><span class="nav-text"><span class="nav-title">Personnaliser</span><span class="nav-sub">Apparence et CSS</span></span></button></li>
+<li><button class="nav-button" data-view="export" type="button"><span class="nav-index">04</span><span class="nav-text"><span class="nav-title">Exporter</span><span class="nav-sub">Format et génération</span></span></button></li>
+</ol></nav><div class="rail-divider"></div><div class="rail-bottom"><p class="mini-heading">Outils avancés</p><button class="button subtle rail-link" id="uiTechnical" type="button"><svg class="ui-icon"><use href="#i-settings"></use></svg>Compatibilité et moteurs</button><button class="button subtle rail-link" id="uiHelp" type="button"><svg class="ui-icon"><use href="#i-help"></use></svg>Comprendre les formats</button><p>Navigation libre entre les quatre sections.</p></div></aside>
+<main class="panel main-panel" id="mainContent">
+<section aria-labelledby="title-import" class="view active" id="view-import"><div class="page-header"><div class="page-header-copy"><p class="eyebrow">Étape 01 · Source</p><h1 id="title-import">Importer une activité</h1><p class="page-description">Choisissez un fichier H5P. L’analyse se déroule dans votre navigateur.</p></div></div><section class="content-section panel">
+<div class="section-title">
+<div>
+<p class="step">Source</p>
+<h2>Source H5P <button aria-expanded="false" aria-label="Aide sur la source H5P" class="help" data-help="Le fichier est lu et analysé directement dans votre navigateur. Il n'est pas envoyé par l'application vers un serveur." type="button">?</button></h2>
+</div>
+</div>
+<label class="file-drop" for="h5pFile" id="h5pDropZone">
+<input accept=".h5p,.zip,application/zip" id="h5pFile" type="file"/>
+<span aria-hidden="true" class="drop-icon">H5P</span>
+<span class="drop-title" id="dropFileName">Glissez-déposez un fichier .h5p ici</span>
+<span class="drop-subtitle">ou cliquez pour le sélectionner</span>
+<span class="drop-help">Formats acceptés : .h5p et archive .zip structurée comme un H5P</span>
+</label>
+<div class="inline-label">Fichier sélectionné <button aria-expanded="false" aria-label="Aide sur le fichier sélectionné" class="help" data-help="Le nom et la taille du fichier apparaissent ici. L'analyse démarre automatiquement après la sélection ou le dépôt." type="button">?</button></div>
+<div class="muted" id="fileMeta">Aucun fichier chargé.</div>
+</section><section class="panel">
+<div class="row between section-title compact">
+<div>
+<p class="step">Analyse</p>
+<h2>Diagnostic <button aria-expanded="false" aria-label="Aide sur le diagnostic" class="help" data-help="Le diagnostic contrôle la structure du H5P, ses dépendances, la compatibilité H5P Core API, sa langue et les paramètres de suivi. Les erreurs bloquent la génération. Les avertissements n'empêchent pas la création du SCORM." type="button">?</button></h2>
+</div>
+<button disabled="" id="analyzeBtn" type="button">Analyser à nouveau</button>
+</div>
+<div class="diagnostic empty" id="diagnostic">Chargez un fichier H5P pour commencer.</div>
+</section></section>
+<section aria-labelledby="title-preview" class="view" hidden="" id="view-preview"><div class="page-header"><div class="page-header-copy"><p class="eyebrow">Étape 02 · Lecture</p><h1 id="title-preview">Prévisualiser l’activité</h1><p class="page-description">Testez les interactions sans communiquer de score à Moodle.</p></div></div><section class="panel" id="previewPanel">
+<div class="row between section-title compact">
+<div>
+<p class="step">Aperçu</p>
+<h2>Visionneuse H5P <button aria-expanded="false" aria-label="Aide sur la visionneuse" class="help" data-help="L'aperçu teste votre activité dans un cadre isolé. Il ne communique aucun score à Moodle. Certains contenus H5P ne sont pas encore compatibles avec le mode isolé." type="button">?</button></h2>
+</div>
+<div class="preview-actions">
+<button disabled="" id="previewRestart" type="button">Recommencer</button>
+<button disabled="" id="previewExpand" type="button">Agrandir</button>
+<button disabled="" id="previewFullscreen" type="button">Plein écran</button>
+</div>
+</div>
+<p aria-live="polite" class="muted" id="previewStatus" role="status">Importez un H5P valide pour afficher l'aperçu.</p>
+<div class="preview-viewport" id="previewViewport">
+<button aria-label="Fermer l'aperçu agrandi" hidden="" id="previewCollapse" type="button">Réduire l'aperçu</button>
+<iframe allow="fullscreen *" allowfullscreen="" id="previewFrame" loading="eager" referrerpolicy="no-referrer" sandbox="allow-scripts" title="Aperçu interactif du contenu H5P"></iframe>
+</div>
+<label class="preview-external-option"><input id="previewExternalVideos" type="checkbox"/> Autoriser les vidéos YouTube externes dans l'aperçu (expérimental, connexion aux serveurs YouTube)</label>
+<section aria-label="Vidéos externes du contenu" class="preview-video-fallback" hidden="" id="previewVideoFallback">
+<h3>Vidéos YouTube du contenu</h3>
+<p>Le lecteur YouTube intégré au H5P peut être bloqué par l'isolation de l'aperçu. Vous pouvez consulter les vidéos ici, en dehors de l'activité H5P. Cette lecture de secours n'est pas prise en compte dans les résultats xAPI.</p>
+<ul id="previewVideoLinks"></ul>
+<div class="preview-youtube-surface" hidden="" id="previewYoutubeSurface">
+<div class="row between">
+<p id="previewYoutubeTitle">Lecteur vidéo externe</p>
+<button id="previewYoutubeClose" type="button">Fermer la vidéo</button>
+</div>
+<iframe allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen="" id="previewYoutubePlayer" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" title="Vidéo YouTube externe"></iframe>
+</div>
+</section>
+<details class="preview-details">
+<summary>Diagnostic de prévisualisation</summary>
+<p class="muted">Les événements xAPI sont affichés à titre informatif. Aucune note n'est envoyée à un LMS.</p>
+<pre class="preview-events" id="previewEvents">Aucun événement.</pre>
+</details>
+<p class="muted preview-caveat">Cette version télécharge par défaut le lecteur validé 3.8.2 lors du premier aperçu. Le mode avancé permet des essais non qualifiés avec d’autres versions, sans export SCORM, puis utilise les ressources H5P en mémoire. Par défaut, le cadre bloque les connexions réseau et les sous-frames. Les vidéos YouTube ne sont tentées qu'après consentement explicite. Certains contenus peuvent rester incompatibles avec les restrictions de sécurité du navigateur.</p>
+</section></section>
+<section aria-labelledby="title-customize" class="view" hidden="" id="view-customize"><div class="page-header"><div class="page-header-copy"><p class="eyebrow">Étape 03 · Apparence</p><h1 id="title-customize">Personnaliser le rendu</h1><p class="page-description">Ajustez la largeur, les marges et les styles pour les trois formats.</p></div></div><section class="content-card" id="commonOutputSettings"><h2>Informations communes</h2><p class="muted">Ces paramètres s’appliquent aux trois formats d’export.</p><div class="grid two" id="commonFields"><div class="field">
+<label for="courseTitle">Titre de l’activité / du SCO <button aria-expanded="false" aria-label="Aide sur le titre du SCO" class="help" data-help="Titre de l’activité exportée, utilisé dans la page HTML ou dans le SCO SCORM. Le nom du fichier H5P est proposé automatiquement et peut être modifié." type="button">?</button></label>
+<input id="courseTitle" type="text" value="Activité H5P"/>
+</div><div class="field">
+<label for="languageOverride">Langue de sortie <button aria-expanded="false" aria-label="Aide sur la langue de sortie" class="help" data-help="Laissez vide pour utiliser en priorité la langue déclarée dans le H5P, puis ses métadonnées, puis la langue du navigateur. Saisissez par exemple fr pour imposer le français." type="button">?</button></label>
+<input autocomplete="off" id="languageOverride" inputmode="text" placeholder="Automatique, ex. fr" type="text"/>
+</div></div></section><section class="panel">
+<div class="section-title">
+<div>
+<p class="step">Apparence</p>
+<h2>Apparence <button aria-expanded="false" aria-label="Aide sur l'apparence" class="help" data-help="Les styles personnalisés sont ajoutés après les styles H5P afin de pouvoir les surcharger. Les règles CSS importées et saisies sont concaténées." type="button">?</button></h2>
+</div>
+</div>
+<div class="grid two">
+<div class="field">
+<label for="layoutMaxWidth">Largeur maximale du contenu (px) <button aria-expanded="false" aria-label="Aide sur la largeur du contenu" class="help" data-help="Largeur maximale du conteneur H5P dans les exports SCORM et HTML. Le contenu est centré automatiquement ; sur les petits écrans, sa largeur diminue pour rester visible. Laissez vide pour utiliser toute la largeur disponible." type="button">?</button></label>
+<input id="layoutMaxWidth" inputmode="numeric" max="10000" min="1" placeholder="Automatique, ex. 960" step="1" type="number"/>
+</div>
+<div class="field-note">
+<div class="field-note-title">Marges ordinateur (à partir de 769 px)</div>
+<span>Réglez séparément le haut, le bas, la gauche et la droite. Un champ vide laisse ce côté inchangé ; 0 supprime l'espace ajouté.</span>
+</div>
+</div>
+<div class="grid four">
+<div class="field"><label for="layoutMarginTop">Marge haute (px) <button aria-expanded="false" aria-label="Aide sur la marge haute" class="help" data-help="Espace au-dessus de l’activité. Laisser vide pour ne rien ajouter ; 0 pour une marge nulle." type="button">?</button></label><input id="layoutMarginTop" inputmode="numeric" max="2000" min="0" placeholder="Ex. 20" step="1" type="number"/></div>
+<div class="field"><label for="layoutMarginBottom">Marge basse (px) <button aria-expanded="false" aria-label="Aide sur la marge basse" class="help" data-help="Espace sous l’activité. Laisser vide pour ne rien ajouter ; 0 pour une marge nulle." type="button">?</button></label><input id="layoutMarginBottom" inputmode="numeric" max="2000" min="0" placeholder="Ex. 20" step="1" type="number"/></div>
+<div class="field"><label for="layoutMarginLeft">Marge gauche (px) <button aria-expanded="false" aria-label="Aide sur la marge gauche" class="help" data-help="Espace à gauche du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive." type="button">?</button></label><input id="layoutMarginLeft" inputmode="numeric" max="2000" min="0" placeholder="Ex. 24" step="1" type="number"/></div>
+<div class="field"><label for="layoutMarginRight">Marge droite (px) <button aria-expanded="false" aria-label="Aide sur la marge droite" class="help" data-help="Espace à droite du contenu ; réduit automatiquement sur un écran trop étroit pour conserver l’affichage responsive." type="button">?</button></label><input id="layoutMarginRight" inputmode="numeric" max="2000" min="0" placeholder="Ex. 24" step="1" type="number"/></div>
+</div><details class="ui-detail"><summary>Marges sur mobile (768 px et moins)</summary><div class="ui-detail-body"><div class="field-note" style="margin-top:16px"><div class="field-note-title">Marges mobile (768 px et moins)</div><span>Les marges ordinateur sont remplacées par ces quatre valeurs sur écran étroit. Par défaut : 0 px de chaque côté. Un champ mobile vide vaut également 0.</span></div><div class="grid four">
+<div class="field"><label for="mobileMarginTop">Marge haute mobile (px)</label><input id="mobileMarginTop" inputmode="numeric" max="2000" min="0" placeholder="0" step="1" type="number"/></div>
+<div class="field"><label for="mobileMarginBottom">Marge basse mobile (px)</label><input id="mobileMarginBottom" inputmode="numeric" max="2000" min="0" placeholder="0" step="1" type="number"/></div>
+<div class="field"><label for="mobileMarginLeft">Marge gauche mobile (px)</label><input id="mobileMarginLeft" inputmode="numeric" max="2000" min="0" placeholder="0" step="1" type="number"/></div>
+<div class="field"><label for="mobileMarginRight">Marge droite mobile (px)</label><input id="mobileMarginRight" inputmode="numeric" max="2000" min="0" placeholder="0" step="1" type="number"/></div>
+</div></div></details>
+<p class="muted">Réglages facultatifs communs aux exports SCORM et HTML. Les marges ordinateur sont appliquées à partir de 769 px ; les marges mobile s'appliquent jusqu'à 768 px et valent 0 par défaut. La largeur maximale reste commune et centrée. Le plein écran H5P reste indépendant.</p>
+<details class="ui-detail"><summary>CSS personnalisé (options avancées)</summary><div class="ui-detail-body"><div class="grid two">
+<div class="field">
+<label for="cssFile">Fichier CSS facultatif <button aria-expanded="false" aria-label="Aide sur le fichier CSS" class="help" data-help="Importez un fichier .css si votre charte existe déjà. Son contenu sera intégré dans les exports SCORM et HTML." type="button">?</button></label>
+<input accept=".css,text/css" id="cssFile" type="file"/>
+</div>
+<div class="field-note">
+<div class="field-note-title">Ordre d'application <button aria-expanded="false" aria-label="Aide sur l'ordre d'application du CSS" class="help" data-help="La surcouche personnalisée est chargée après les styles du lecteur H5P et des bibliothèques. Certaines règles H5P très spécifiques peuvent toutefois nécessiter des sélecteurs plus précis." type="button">?</button></div>
+<span>Les styles personnalisés sont chargés en dernier pour faciliter les surcharges.</span>
+</div>
+</div><div class="field">
+<label for="cssText">CSS intégré <button aria-expanded="false" aria-label="Aide sur le CSS intégré" class="help" data-help="Ajoutez ou modifiez ici des règles CSS. Elles s'ajoutent au fichier CSS éventuellement importé. Laissez vide si aucune surcouche n'est souhaitée." type="button">?</button></label>
+<textarea id="cssText" rows="10" spellcheck="false">/* Exemple de surcouche */
 .h5p-content {
   font-family: Arial, sans-serif;
 }
 </textarea>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="section-title">
-        <div>
-          <p class="step">Étape 3</p>
-          <h2>Paramètres SCORM <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les paramètres SCORM" data-help="Ces réglages déterminent le titre du SCO, la langue, la logique de réussite et la manière dont la progression H5P est conservée dans SCORM 1.2.">?</button></h2>
-        </div>
-      </div>
-
-      <div class="grid three">
-        <div class="field">
-          <label for="courseTitle">Titre de l’activité / du SCO <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le titre du SCO" data-help="Titre de l’activité exportée, utilisé dans la page HTML ou dans le SCO SCORM. Le nom du fichier H5P est proposé automatiquement et peut être modifié.">?</button></label>
-          <input id="courseTitle" type="text" value="Activité H5P">
-        </div>
-        <div class="field">
-          <label for="languageOverride">Langue de sortie <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la langue de sortie" data-help="Laissez vide pour utiliser en priorité la langue déclarée dans le H5P, puis ses métadonnées, puis la langue du navigateur. Saisissez par exemple fr pour imposer le français.">?</button></label>
-          <input id="languageOverride" type="text" inputmode="text" autocomplete="off" placeholder="Automatique, ex. fr">
-        </div>
-        <div class="field">
-          <label for="statusPolicy">Politique de statut <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la politique de statut" data-help="Automatique utilise les informations de réussite émises par H5P puis le score si nécessaire. Seuil de score décide selon le pourcentage obtenu. Achèvement seul remonte completed sans imposer passed ou failed.">?</button></label>
-          <select id="statusPolicy">
-            <option value="auto" selected>Automatique</option>
-            <option value="score">Seuil de score</option>
-            <option value="completion">Achèvement seul</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid three">
-        <div class="field">
-          <label for="masteryScore">Seuil de réussite (%) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le seuil de réussite" data-help="Pourcentage utilisé pour déterminer passed ou failed lorsque la politique le nécessite. Le score envoyé au LMS est toujours normalisé de 0 à 100.">?</button></label>
-          <input id="masteryScore" type="number" min="0" max="100" step="1" value="80">
-        </div>
-        <div class="field">
-          <label for="saveFreq">Fréquence de sauvegarde (s) <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la fréquence de sauvegarde" data-help="Intervalle entre deux captures périodiques de l'état H5P. Des sauvegardes supplémentaires peuvent aussi être déclenchées par les événements xAPI et lors de la fermeture.">?</button></label>
-          <input id="saveFreq" type="number" min="5" max="300" step="1" value="10">
-        </div>
-        <div class="field">
-          <label for="resumeProfile">Profil de reprise <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le profil de reprise" data-help="SCORM 1.2 strict limite l'état à 4000 caractères pour maximiser l'interopérabilité. Moodle étendu 64K autorise jusqu'à 64000 caractères, mais exige une configuration serveur spécifique et reste expérimental ici.">?</button></label>
-          <select id="resumeProfile">
-            <option value="strict" selected>SCORM 1.2 strict, recommandé</option>
-            <option value="moodle-extended">Moodle étendu 64K, expérimental</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field-note accent-note">
-        <div class="field-note-title">Reprise de progression <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la reprise de progression" data-help="L'état H5P est sérialisé et compressé si possible, puis enregistré dans cmi.suspend_data. Si l'état dépasse la capacité du profil choisi, le dernier état sauvegardable est conservé et une alerte peut être affichée dans l'activité.">?</button></div>
-        <span>Le profil strict reste la valeur par défaut. Le mode Moodle étendu est fourni pour les environnements administrés où cette capacité est explicitement autorisée.</span>
-      </div>
-
-      <details class="preview-details" id="scoreAggregationAdvanced">
-        <summary>Notation composite expérimentale (mode avancé)</summary>
-        <label class="check"><input id="enableExperimentalAggregation" type="checkbox">
+</div></div></details></section></section>
+<section aria-labelledby="title-export" class="view" hidden="" id="view-export"><div class="page-header"><div class="page-header-copy"><p class="eyebrow">Étape 04 · Conversion</p><h1 id="title-export">Exporter l’activité</h1><p class="page-description">Sélectionnez le format souhaité et lancez la génération.</p></div></div>
+<div aria-label="Format de sortie" class="format-cards" role="radiogroup">
+<label class="format-option" data-format="scorm"><input checked="" name="uiExportFormat" type="radio" value="scorm"/><span class="format-icon"><svg class="ui-icon"><use href="#i-shield"></use></svg></span><strong>SCORM 1.2</strong><small>Paquet ZIP avec notation et reprise dans un LMS.</small></label>
+<label class="format-option" data-format="multi"><input name="uiExportFormat" type="radio" value="multi"/><span class="format-icon"><svg class="ui-icon"><use href="#i-file"></use></svg></span><strong>HTML multifichier</strong><small>Mini-site ZIP autonome pour l’hébergement web.</small></label>
+<label class="format-option" data-format="single"><input name="uiExportFormat" type="radio" value="single"/><span class="format-icon"><svg class="ui-icon"><use href="#i-download"></use></svg></span><strong>HTML monofichier</strong><small>Document interactif unique.</small><span class="experimental">Compatibilité expérimentale</span></label>
+</div><div class="export-cta"><p class="export-note" id="uiFormatNote">SCORM 1.2 : suivi du score et de la progression dans Moodle.</p><button class="button primary" disabled="" id="uiGeneratePrimary" type="button"><svg class="ui-icon"><use href="#i-download"></use></svg>Convertir en SCORM 1.2</button></div><section class="panel scorm-options-panel" id="scormOptionsPanel">
+<div class="section-title">
+<div>
+<p class="step">SCORM 1.2</p>
+<h2>Paramètres SCORM <button aria-expanded="false" aria-label="Aide sur les paramètres SCORM" class="help" data-help="Ces réglages déterminent le titre du SCO, la langue, la logique de réussite et la manière dont la progression H5P est conservée dans SCORM 1.2." type="button">?</button></h2>
+</div>
+</div>
+<div class="grid one">
+<div class="field">
+<label for="statusPolicy">Politique de statut <button aria-expanded="false" aria-label="Aide sur la politique de statut" class="help" data-help="Automatique utilise les informations de réussite émises par H5P puis le score si nécessaire. Seuil de score décide selon le pourcentage obtenu. Achèvement seul remonte completed sans imposer passed ou failed." type="button">?</button></label>
+<select id="statusPolicy">
+<option selected="" value="auto">Automatique</option>
+<option value="score">Seuil de score</option>
+<option value="completion">Achèvement seul</option>
+</select>
+</div>
+</div>
+<div class="grid three">
+<div class="field">
+<label for="masteryScore">Seuil de réussite (%) <button aria-expanded="false" aria-label="Aide sur le seuil de réussite" class="help" data-help="Pourcentage utilisé pour déterminer passed ou failed lorsque la politique le nécessite. Le score envoyé au LMS est toujours normalisé de 0 à 100." type="button">?</button></label>
+<input id="masteryScore" max="100" min="0" step="1" type="number" value="80"/>
+</div>
+<div class="field">
+<label for="saveFreq">Fréquence de sauvegarde (s) <button aria-expanded="false" aria-label="Aide sur la fréquence de sauvegarde" class="help" data-help="Intervalle entre deux captures périodiques de l'état H5P. Des sauvegardes supplémentaires peuvent aussi être déclenchées par les événements xAPI et lors de la fermeture." type="button">?</button></label>
+<input id="saveFreq" max="300" min="5" step="1" type="number" value="10"/>
+</div>
+<div class="field">
+<label for="resumeProfile">Profil de reprise <button aria-expanded="false" aria-label="Aide sur le profil de reprise" class="help" data-help="SCORM 1.2 strict limite l'état à 4000 caractères pour maximiser l'interopérabilité. Moodle étendu 64K autorise jusqu'à 64000 caractères, mais exige une configuration serveur spécifique et reste expérimental ici." type="button">?</button></label>
+<select id="resumeProfile">
+<option selected="" value="strict">SCORM 1.2 strict, recommandé</option>
+<option value="moodle-extended">Moodle étendu 64K, expérimental</option>
+</select>
+</div>
+</div>
+<div class="field-note accent-note">
+<div class="field-note-title">Reprise de progression <button aria-expanded="false" aria-label="Aide sur la reprise de progression" class="help" data-help="L'état H5P est sérialisé et compressé si possible, puis enregistré dans cmi.suspend_data. Si l'état dépasse la capacité du profil choisi, le dernier état sauvegardable est conservé et une alerte peut être affichée dans l'activité." type="button">?</button></div>
+<span>Le profil strict reste la valeur par défaut. Le mode Moodle étendu est fourni pour les environnements administrés où cette capacité est explicitement autorisée.</span>
+</div>
+<details class="preview-details" id="scoreAggregationAdvanced">
+<summary>Notation composite expérimentale (mode avancé)</summary>
+<label class="check"><input id="enableExperimentalAggregation" type="checkbox"/>
           Autoriser l'agrégation des sous-exercices d'Interactive Book, uniquement si leur périmètre est vérifiable
         </label>
-        <p class="muted">Désactivé par défaut. Le score global natif reste prioritaire. Une bibliothèque ou une structure non reconnue, des exercices manquants ou l'absence de fin globale empêchent l'agrégation. À tester dans Moodle avant usage pédagogique.</p>
-      </details>
-
-      <div class="checks">
-        <label class="check"><input id="markIncomplete" type="checkbox" checked> Marquer la tentative « incomplete » au premier lancement <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le statut incomplete" data-help="Recommandé pour permettre au LMS de considérer la tentative comme en cours tant que le H5P n'a pas produit de résultat final.">?</button></label>
-        <label class="check"><input id="enableResume" type="checkbox" checked> Activer la reprise via <code>cmi.suspend_data</code> <button type="button" class="help" aria-expanded="false" aria-label="Aide sur l'activation de la reprise" data-help="Désactivez cette option uniquement si le contenu ne doit jamais restaurer une progression précédente. Pour Moodle, il est recommandé de la laisser activée.">?</button></label>
-        <label class="check"><input id="showRuntimeWarnings" type="checkbox" checked> Afficher uniquement les alertes de reprise dans l'activité <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les alertes de reprise" data-help="Aucun message de sauvegarde réussie n'est affiché. Cette option autorise seulement les alertes utiles, par exemple un état trop volumineux. Les erreurs SCORM graves restent signalées.">?</button></label>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="row between section-title compact">
-        <div>
-          <p class="step">Étape 4</p>
-          <h2>Diagnostic <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le diagnostic" data-help="Le diagnostic contrôle la structure du H5P, ses dépendances, la compatibilité H5P Core API, sa langue et les paramètres de suivi. Les erreurs bloquent la génération. Les avertissements n'empêchent pas la création du SCORM.">?</button></h2>
-        </div>
-        <button id="analyzeBtn" type="button" disabled>Analyser à nouveau</button>
-      </div>
-      <div id="diagnostic" class="diagnostic empty">Chargez un fichier H5P pour commencer.</div>
-    </section>
-
-    <section class="panel" id="previewPanel">
-      <div class="row between section-title compact">
-        <div>
-          <p class="step">Après analyse</p>
-          <h2>Visionneuse H5P <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la visionneuse" data-help="L'aperçu teste votre activité dans un cadre isolé. Il ne communique aucun score à Moodle. Certains contenus H5P ne sont pas encore compatibles avec le mode isolé.">?</button></h2>
-        </div>
-        <div class="preview-actions">
-          <button id="previewRestart" type="button" disabled>Recommencer</button>
-          <button id="previewExpand" type="button" disabled>Agrandir</button>
-          <button id="previewFullscreen" type="button" disabled>Plein écran</button>
-        </div>
-      </div>
-      <p id="previewStatus" class="muted" role="status" aria-live="polite">Importez un H5P valide pour afficher l'aperçu.</p>
-      <div id="previewViewport" class="preview-viewport">
-        <button id="previewCollapse" type="button" hidden aria-label="Fermer l'aperçu agrandi">Réduire l'aperçu</button>
-        <iframe id="previewFrame" title="Aperçu interactif du contenu H5P" sandbox="allow-scripts" allow="fullscreen *" allowfullscreen referrerpolicy="no-referrer" loading="eager"></iframe>
-      </div>
-      <label class="preview-external-option"><input id="previewExternalVideos" type="checkbox"> Autoriser les vidéos YouTube externes dans l'aperçu (expérimental, connexion aux serveurs YouTube)</label>
-      <section id="previewVideoFallback" class="preview-video-fallback" aria-label="Vidéos externes du contenu" hidden>
-        <h3>Vidéos YouTube du contenu</h3>
-        <p>Le lecteur YouTube intégré au H5P peut être bloqué par l'isolation de l'aperçu. Vous pouvez consulter les vidéos ici, en dehors de l'activité H5P. Cette lecture de secours n'est pas prise en compte dans les résultats xAPI.</p>
-        <ul id="previewVideoLinks"></ul>
-        <div id="previewYoutubeSurface" class="preview-youtube-surface" hidden>
-          <div class="row between">
-            <p id="previewYoutubeTitle">Lecteur vidéo externe</p>
-            <button id="previewYoutubeClose" type="button">Fermer la vidéo</button>
-          </div>
-          <iframe id="previewYoutubePlayer" title="Vidéo YouTube externe" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>
-        </div>
-      </section>
-      <details class="preview-details">
-        <summary>Diagnostic de prévisualisation</summary>
-        <p class="muted">Les événements xAPI sont affichés à titre informatif. Aucune note n'est envoyée à un LMS.</p>
-        <pre id="previewEvents" class="preview-events">Aucun événement.</pre>
-      </details>
-      <p class="muted preview-caveat">Cette version télécharge par défaut le lecteur validé 3.8.2 lors du premier aperçu. Le mode avancé permet des essais non qualifiés avec d’autres versions, sans export SCORM, puis utilise les ressources H5P en mémoire. Par défaut, le cadre bloque les connexions réseau et les sous-frames. Les vidéos YouTube ne sont tentées qu'après consentement explicite. Certains contenus peuvent rester incompatibles avec les restrictions de sécurité du navigateur.</p>
-    </section>
-
-    <section class="panel">
-      <div class="row between section-title compact">
-        <div>
-          <p class="step">Étape 5</p>
-          <h2>Génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur la génération" data-help="Le navigateur construit le ZIP SCORM ou HTML multifichier localement. Une connexion Internet est actuellement nécessaire au moment de la conversion pour récupérer la version figée du lecteur H5P Standalone. Les exports restent autonomes après génération.">?</button></h2>
-        </div>
-        <div class="preview-actions">
-          <button id="singlefileInteractiveBtn" type="button" disabled>HTML monofichier interactif (essai)</button>
-          <button id="generateHtmlBtn" type="button" disabled>Générer le HTML multifichier</button>
-          <button id="generateBtn" type="button" disabled>Générer le SCORM</button>
-        </div>
-      </div>
-      <p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le bouton « HTML monofichier interactif (essai) » crée une version expérimentale avec lecteur embarqué, sans garantie pour tous les types H5P. En cas d’incompatibilité, utilisez le HTML multifichier. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
-      <div id="generationProgressWrap" class="generation-progress" hidden>
-        <div class="generation-progress-head">
-          <span id="generationProgressPhase">Génération</span>
-          <span id="generationProgressPercent" class="metric">0 %</span>
-        </div>
-        <progress id="generationProgress" max="100" value="0">0 %</progress>
-      </div>
-      <div class="inline-label">Journal de génération <button type="button" class="help" aria-expanded="false" aria-label="Aide sur le journal de génération" data-help="Ce journal concerne uniquement la conversion. Il n'affiche pas les sauvegardes de progression effectuées ensuite dans l'activité SCORM.">?</button></div>
-      <pre id="log" class="log" aria-live="polite"></pre>
-    </section>
-
-    <section class="panel notes">
-      <div class="section-title">
-        <div>
-          <h2>Compatibilité et limites <button type="button" class="help" aria-expanded="false" aria-label="Aide sur les limites" data-help="La version 1.0.1 est centrée sur SCORM 1.2 et Moodle. Elle contrôle aussi la H5P Core API demandée par les bibliothèques avant génération. La compatibilité H5P dépend encore du comportement propre de chaque bibliothèque, notamment pour la restauration de l'état.">?</button></h2>
-        </div>
-      </div>
-      <ul>
-        <li>Deux sorties disponibles : SCORM 1.2 avec suivi LMS et HTML multifichier sans suivi LMS. L'HTML monofichier est en étude : seul son diagnostic de faisabilité est disponible (aucun HTML unique non certifié n'est distribué).</li>
-        <li>Runtime figé : H5P Standalone 3.8.2, plafond de compatibilité déclaré H5P Core API 1.28. Une bibliothèque requérant une API plus récente bloque la génération.</li>
-        <li>Score SCORM normalisé de 0 à 100, quel que soit le barème natif du H5P.</li>
-        <li>Reprise stricte limitée à 4000 caractères après optimisation. Le mode Moodle 64K est expérimental.</li>
-        <li>Les messages ordinaires de sauvegarde ne sont jamais affichés dans l'activité. Seules les alertes utiles peuvent apparaître.</li>
-        <li>Certains types H5P peuvent restaurer leur progression sans restaurer tous les détails visuels.</li>
-        <li>Le contenu H5P et le CSS sont traités localement. Le lecteur H5P est récupéré au moment de la génération puis embarqué dans les deux formats. Aucun CDN n’est nécessaire à la lecture du mini-site HTML.</li>
-      </ul>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="src/runtime-profiles.js"></script>
-  <script src="src/engine-catalog.js"></script>
-  <script src="src/player-assets.js"></script>
-  <script src="src/portable-package.js"></script>
-  <script src="src/html-multifile.js"></script>
-  <script src="src/export-layout.js"></script>
-  <script src="src/html-singlefile-resources.js"></script>
-  <script src="src/html-singlefile-player.js"></script>
-  <script src="src/engine-qualification.js"></script>
-  <script src="src/scorm-scoring.js"></script>
-  <script src="src/scorm-score-plan.js"></script>
-  <script src="src/h5p-dependencies.js"></script>
-  <script src="src/h5p-analysis.js"></script>
-  <script src="src/preview-frame.js"></script>
-  <script src="src/h5p-preview.js"></script>
-  <script src="src/youtube-preview.js"></script>
-  <script src="app.js"></script>
-</body>
+<p class="muted">Désactivé par défaut. Le score global natif reste prioritaire. Une bibliothèque ou une structure non reconnue, des exercices manquants ou l'absence de fin globale empêchent l'agrégation. À tester dans Moodle avant usage pédagogique.</p>
+</details>
+<div class="checks">
+<label class="check"><input checked="" id="markIncomplete" type="checkbox"/> Marquer la tentative « incomplete » au premier lancement <button aria-expanded="false" aria-label="Aide sur le statut incomplete" class="help" data-help="Recommandé pour permettre au LMS de considérer la tentative comme en cours tant que le H5P n'a pas produit de résultat final." type="button">?</button></label>
+<label class="check"><input checked="" id="enableResume" type="checkbox"/> Activer la reprise via <code>cmi.suspend_data</code> <button aria-expanded="false" aria-label="Aide sur l'activation de la reprise" class="help" data-help="Désactivez cette option uniquement si le contenu ne doit jamais restaurer une progression précédente. Pour Moodle, il est recommandé de la laisser activée." type="button">?</button></label>
+<label class="check"><input checked="" id="showRuntimeWarnings" type="checkbox"/> Afficher uniquement les alertes de reprise dans l'activité <button aria-expanded="false" aria-label="Aide sur les alertes de reprise" class="help" data-help="Aucun message de sauvegarde réussie n'est affiché. Cette option autorise seulement les alertes utiles, par exemple un état trop volumineux. Les erreurs SCORM graves restent signalées." type="button">?</button></label>
+</div>
+</section><section class="panel">
+<div class="row between section-title compact">
+<div>
+<p class="step">Génération</p>
+<h2>Génération <button aria-expanded="false" aria-label="Aide sur la génération" class="help" data-help="Le navigateur construit le ZIP SCORM ou HTML multifichier localement. Une connexion Internet est actuellement nécessaire au moment de la conversion pour récupérer la version figée du lecteur H5P Standalone. Les exports restent autonomes après génération." type="button">?</button></h2>
+</div>
+<div class="preview-actions legacy-export-actions">
+<button disabled="" id="singlefileInteractiveBtn" type="button">HTML monofichier interactif (essai)</button>
+<button disabled="" id="generateHtmlBtn" type="button">Générer le HTML multifichier</button>
+<button disabled="" id="generateBtn" type="button">Générer le SCORM</button>
+</div>
+</div>
+<p class="muted">HTML multifichier : mini-site ZIP autonome à publier sur un hébergement HTTP(S) statique, dans un sous-répertoire ou, si l'environnement le permet, comme ressource « Fichier » dans Moodle. Le bouton « HTML monofichier interactif (essai) » crée une version expérimentale avec lecteur embarqué, sans garantie pour tous les types H5P. En cas d’incompatibilité, utilisez le HTML multifichier. Les réglages de notation et de reprise concernent uniquement l'export SCORM.</p>
+<div class="generation-progress" hidden="" id="generationProgressWrap">
+<div class="generation-progress-head">
+<span id="generationProgressPhase">Génération</span>
+<span class="metric" id="generationProgressPercent">0 %</span>
+</div>
+<progress id="generationProgress" max="100" value="0">0 %</progress>
+</div>
+<div class="inline-label">Journal de génération <button aria-expanded="false" aria-label="Aide sur le journal de génération" class="help" data-help="Ce journal concerne uniquement la conversion. Il n'affiche pas les sauvegardes de progression effectuées ensuite dans l'activité SCORM." type="button">?</button></div>
+<pre aria-live="polite" class="log" id="log"></pre>
+</section><details class="ui-detail" id="uiCompatibility"><summary>Compatibilité, limites et détails techniques</summary><div class="ui-detail-body"></div><section class="panel notes notes-legacy">
+<div class="section-title">
+<div>
+<h2>Compatibilité et limites <button aria-expanded="false" aria-label="Aide sur les limites" class="help" data-help="La version 1.0.1 est centrée sur SCORM 1.2 et Moodle. Elle contrôle aussi la H5P Core API demandée par les bibliothèques avant génération. La compatibilité H5P dépend encore du comportement propre de chaque bibliothèque, notamment pour la restauration de l'état." type="button">?</button></h2>
+</div>
+</div>
+<ul>
+<li>Trois formats disponibles : SCORM 1.2 avec suivi LMS, HTML multifichier autonome et HTML monofichier interactif (compatibilité expérimentale selon le contenu).</li>
+<li>Runtime figé : H5P Standalone 3.8.2, plafond de compatibilité déclaré H5P Core API 1.28. Une bibliothèque requérant une API plus récente bloque la génération.</li>
+<li>Score SCORM normalisé de 0 à 100, quel que soit le barème natif du H5P.</li>
+<li>Reprise stricte limitée à 4000 caractères après optimisation. Le mode Moodle 64K est expérimental.</li>
+<li>Les messages ordinaires de sauvegarde ne sont jamais affichés dans l'activité. Seules les alertes utiles peuvent apparaître.</li>
+<li>Certains types H5P peuvent restaurer leur progression sans restaurer tous les détails visuels.</li>
+<li>Le contenu H5P et le CSS sont traités localement. Le lecteur H5P est récupéré au moment de la génération puis embarqué dans les deux formats. Aucun CDN n’est nécessaire à la lecture du mini-site HTML.</li>
+</ul>
+</section></details></section>
+</main><aside aria-label="Contexte de la conversion" class="panel inspector"><h2>Vue d’ensemble</h2><div class="inspector-block"><p class="inspector-block-title">Fichier source</p><div class="summary-card"><strong id="uiSummaryFile">Aucun H5P chargé</strong><p id="uiSummaryMeta">Sélectionnez un fichier pour commencer.</p></div></div><div class="inspector-block"><p class="inspector-block-title">Analyse et compatibilité</p><p class="summary-card" id="uiSummaryDiagnostic">En attente d’un fichier H5P.</p></div><div class="inspector-block"><p class="inspector-block-title">Export</p><div class="summary-card"><strong id="uiSummaryFormat">SCORM 1.2</strong><p id="uiSummaryReady">Importez un H5P valide pour activer l’export.</p></div></div><p class="inspector-foot">Le contenu H5P et vos styles sont traités localement. Le lecteur H5P est récupéré lors de la conversion, puis embarqué dans l’export.</p></aside></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="src/runtime-profiles.js"></script>
+<script src="src/engine-catalog.js"></script>
+<script src="src/player-assets.js"></script>
+<script src="src/portable-package.js"></script>
+<script src="src/html-multifile.js"></script>
+<script src="src/export-layout.js"></script>
+<script src="src/html-singlefile-resources.js"></script>
+<script src="src/html-singlefile-player.js"></script>
+<script src="src/engine-qualification.js"></script>
+<script src="src/scorm-scoring.js"></script>
+<script src="src/scorm-score-plan.js"></script>
+<script src="src/h5p-dependencies.js"></script>
+<script src="src/h5p-analysis.js"></script>
+<script src="src/preview-frame.js"></script>
+<script src="src/h5p-preview.js"></script>
+<script src="src/youtube-preview.js"></script>
+<script src="app.js"></script>
+<script src="src/ui-workspace.js"></script></body>
 </html>
